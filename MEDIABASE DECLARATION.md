@@ -11,6 +11,8 @@ consuming audio and video. Anyone can publish; consumers pay a fixed monthly
 subscription for access to all content. The platform is built to maximize
 the share of revenue that reaches creators, not shareholders.
 
+Available on web, iOS, Android, macOS, Windows, and Linux.
+
 ## Ownership: Stiftelse (Foundation)
 
 Mediabase is owned and operated by a Swedish stiftelse, not a company. The

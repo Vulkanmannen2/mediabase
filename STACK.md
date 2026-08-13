@@ -19,11 +19,9 @@ See `PLANNING.md` for architecture decisions, reasoning, and roadmap.
 |---|---|---|
 | Version control | GitHub (public, Apache 2.0) | Source code hosting |
 | Hosting | Hetzner VPS (Europe, ~€5–7/mo) | Runs the app, database, and (v1) file storage |
-| Deployment tooling | Coolify (self-hosted) | Infra-layer orchestration — Docker, services, env vars. Does not touch app code |
+| Deployment tooling | Coolify (self-hosted) | Infra-layer orchestration — Docker, services, env vars, SSL/reverse proxy (built-in Traefik), and container restarts. Does not touch app code |
 | CI/CD | GitHub Actions | Automates build + deploy on push to `main` |
 | DNS | Loopia | Domain registrar only — holds the DNS record pointing the domain at the Hetzner VPS's IP. Not involved once traffic arrives at the server |
-| Web/SSL layer | Nginx (runs on the VPS) | Handles traffic once it reaches the VPS: terminates SSL/HTTPS, reverse-proxies requests to the Next.js app's internal port. Separate concern from DNS — Loopia gets you *to* the server, Nginx decides what happens *at* the server |
-| Process management | pm2 or systemd | Keeps the Next.js app running, restarts on crash/deploy |
 | Editor | VS Code | Development environment — recommended extensions: Prisma, ESLint, Tailwind CSS IntelliSense, GitLens |
 
 ## Planned / Step Two
@@ -42,6 +40,9 @@ See `PLANNING.md` for architecture decisions, reasoning, and roadmap.
 | Search | Meilisearch | Fast self-hosted search over media library |
 | Analytics | Umami | Privacy-friendly, self-hosted analytics |
 | Uploads | tus | Resumable upload protocol, useful for large media files |
+| iOS app | Swift / SwiftUI | Native client, full device API access |
+| Android app | Kotlin / Jetpack Compose | Native client, full device API access |
+| Desktop app | Tauri | macOS, Windows, Linux native wrapper |
 
 ## Guiding Principle
 

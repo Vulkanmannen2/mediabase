@@ -22,16 +22,16 @@ files. Open source, Apache 2.0. GitHub: Vulkanmannen2.
 | CI/CD | GitHub Actions |
 | DNS | Loopia → Hetzner VPS |
 | Database | PostgreSQL on the VPS (Coolify/Docker) |
-| Web/SSL | Nginx (VPS) |
-| Process management | pm2 or systemd |
+| SSL / reverse proxy | Coolify's built-in Traefik |
+| Process management | Docker restart policy (via Coolify) |
 
 ## Deployment Workflow (v1)
 
 1. Edit locally
 2. Push to GitHub
 3. SSH to VPS
-4. Pull, build, restart via pm2/systemd
-5. Nginx handles domain + SSL
+4. Pull, build; Coolify redeploys the container (Docker restart policy)
+5. Coolify's built-in proxy handles domain + SSL
 
 GitHub Actions to eventually automate steps 3–4.
 
@@ -50,12 +50,28 @@ deployed and stable.
 - Remote Claude Code sessions via the Hetzner VPS (convenience layer, not
   primary workflow).
 - At-scale candidates: MinIO, FFmpeg + BullMQ, Keycloak, Meilisearch, Umami, tus.
+- Native apps: iOS (Swift/SwiftUI), Android (Kotlin/Jetpack Compose),
+  desktop (Tauri) — after web v1 is stable.
 
 ## Ground Rules
 
-- Infra work (Coolify, Nginx, pm2) stays separate from app code.
+- Infra work (Coolify — Docker, proxy, restarts) stays separate from app code.
 - R2 migration is an explicit step two, not a side effect of other tasks.
 - One tool per job.
 - Full tech reference: `STACK.md`.
 
 ## Specification Version 1
+
+1. **Data model** — Next.js + Prisma + Postgres. `Media { id, title, type,
+   filePath, mimeType, durationSeconds, createdAt }`.
+2. **Seed data** — 3–5 files in `/public/media`, seed script inserts
+   matching rows.
+3. **API** — `GET /api/media`, `GET /api/media/:id`; range-request support
+   required (seeking).
+4. **Frontend** — one dark-themed page: list → click → play in
+   `<audio>`/`<video>`. No auth, no uploads.
+5. **Deploy** — Hetzner VPS via Coolify, confirm SSL, confirm GitHub
+   Actions triggers deploy on push to `main`.
+
+Deferred: auth, uploads UI, consumption tracking/payouts, Cloudflare R2,
+transcoding.
