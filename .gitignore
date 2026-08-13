@@ -1,0 +1,55 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Next.js build output
+.next/
+out/
+build/
+dist/
+
+# Production
+*.tsbuildinfo
+
+# Environment variables — never commit secrets/DB credentials
+.env
+.env*.local
+.env.production
+.env.development
+
+# Prisma
+prisma/migrations/dev.db*
+*.db
+*.db-journal
+
+# Local media storage (user-uploaded content, not code)
+/uploads/
+/public/uploads/
+/media/
+/storage/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Testing / coverage
+coverage/
+
+# Vercel
+.vercel
+
+# TypeScript
+next-env.d.ts
