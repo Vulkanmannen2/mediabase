@@ -26,6 +26,7 @@ prisma/migrations/dev.db*
 # Local media storage (user-uploaded content, not code)
 /uploads/
 /public/uploads/
+/public/media/
 /media/
 /storage/
 
@@ -53,3 +54,4 @@ coverage/
 
 # TypeScript
 next-env.d.ts
+/app/generated/prisma
