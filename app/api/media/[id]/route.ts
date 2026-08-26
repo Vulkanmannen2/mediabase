@@ -9,6 +9,7 @@ export async function GET(
 ) {
   const media = await prisma.media.findUnique({
     where: { id: params.id },
+    include: { uploader: { select: { name: true, email: true } } },
   });
 
   if (!media) {

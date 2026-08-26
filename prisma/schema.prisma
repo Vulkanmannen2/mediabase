@@ -25,4 +25,15 @@ model Media {
   mimeType         String
   durationSeconds  Int?
   createdAt        DateTime  @default(now())
+  uploaderId       String?
+  uploader         User?     @relation(fields: [uploaderId], references: [id])
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String
+  name          String?
+  createdAt     DateTime @default(now())
+  media         Media[]
 }

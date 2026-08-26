@@ -9,6 +9,7 @@ type MediaItem = {
   filePath: string;
   mimeType: string;
   durationSeconds: number | null;
+  uploader: { name: string | null; email: string } | null;
 };
 
 function formatDuration(seconds: number | null): string {
@@ -40,7 +41,7 @@ export default function MediaLibrary({ media }: { media: MediaItem[] }) {
             <video
               key={selected.id}
               className="w-full rounded"
-              src={selected.filePath}
+              src={`/api/media/${selected.id}/file`}
               controls
               autoPlay
             />
@@ -48,7 +49,7 @@ export default function MediaLibrary({ media }: { media: MediaItem[] }) {
             <audio
               key={selected.id}
               className="w-full"
-              src={selected.filePath}
+              src={`/api/media/${selected.id}/file`}
               controls
               autoPlay
             />
@@ -75,7 +76,12 @@ export default function MediaLibrary({ media }: { media: MediaItem[] }) {
                 >
                   {item.type}
                 </span>
-                <span className="truncate text-sm text-neutral-100">{item.title}</span>
+                <span className="flex min-w-0 flex-col">
+                  <span className="truncate text-sm text-neutral-100">{item.title}</span>
+                  <span className="truncate text-xs text-neutral-500">
+                    {item.uploader ? item.uploader.name ?? item.uploader.email : "seed data"}
+                  </span>
+                </span>
               </span>
               <span className="shrink-0 text-xs tabular-nums text-neutral-500">
                 {formatDuration(item.durationSeconds)}

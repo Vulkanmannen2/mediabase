@@ -75,3 +75,59 @@ deployed and stable.
 
 Deferred: auth, uploads UI, consumption tracking/payouts, Cloudflare R2,
 transcoding.
+
+## Specification Version 2
+
+**Goal:** two pages instead of one hand-seeded library — upload and
+consume — behind a login. No payments, no payout logic, no creator/
+consumer role split.
+
+1. **Auth** — Auth.js (NextAuth) with the Prisma adapter, email/password
+   provider. Adds `User`, `Account`, `Session` models. New env var
+   (`AUTH_SECRET`) in local `.env` and in Coolify.
+2. **Data model** — `Media.uploaderId → User.id`. Any logged-in user can
+   both upload and consume; no separate roles.
+3. **Upload page** — authenticated route: form (title, file picker) →
+   validate type/size → save to `/public/media/<type>/` → insert `Media`
+   row with `uploaderId`. Still local disk, same as v1.
+4. **Consume page** — existing list/player, gated behind login, shows
+   uploader name.
+5. **Media serving has to change** — the static `/public` handler only
+   knows about files that existed when the app process started (this is
+   why the v1 seed upload needed a manual container restart — see
+   `ARCHITECTURE.html`). Fine for a one-time seed, not fine for live user
+   uploads. v2 needs a small custom route (`GET /api/media/:id/file`)
+   that reads the file from disk on every request instead, so a fresh
+   upload is playable immediately, no restart.
+
+Deferred — not yet scoped as a version: payments/subscriptions,
+consumption-based payout calculation, creator/consumer roles, resumable
+uploads (`tus`), R2.
+
+## Specification — Full Application
+
+**Goal:** two-sided app — anyone logged in can upload, anyone logged in can
+browse and play — instead of a single hand-seeded library. The fuller
+shape v2 is a step toward; not scoped for a single build.
+
+1. **Auth** — Auth.js (NextAuth) with the Prisma adapter. Email/password to
+   start; OAuth providers can follow later. Adds `User`, `Account`,
+   `Session` models per Auth.js's schema. Keycloak stays a possible
+   at-scale swap (`STACK.md`), not needed yet.
+2. **Data model** — `Media.uploaderId → User.id`. No separate creator/
+   consumer role — matches the declaration's "anyone can publish"
+   vision; every logged-in user can do both.
+3. **Upload** — authenticated route: form (title, file picker) → validate
+   type/size → save to `/public/media/<type>/` → insert `Media` row with
+   `uploaderId`. Still local disk, same as v1. User-generated uploads make
+   the R2 migration (Step Two, above) more urgent than it was, but it
+   stays a separate task, not a side effect of shipping upload.
+4. **Consume** — existing list/player UI, extended to show uploader name.
+   Gated behind login only — no payment/subscription logic yet.
+5. **Access control** — logged-out visitors see a login/signup prompt,
+   nothing else. No public/anonymous browsing.
+
+Deferred beyond this: payments/subscriptions, consumption-based payout
+calculation (the actual creator-compensation mechanic from
+`MEDIABASE DECLARATION.md`), creator vs. consumer roles, resumable
+uploads (`tus`) for large files.
