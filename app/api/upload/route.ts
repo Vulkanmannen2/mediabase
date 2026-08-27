@@ -3,6 +3,7 @@ import { writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { baseUrl } from "@/lib/base-url";
 import { MediaType } from "@/app/generated/prisma/client";
 
 const MIME_TYPES: Record<string, { type: MediaType; mime: string }> = {
@@ -18,7 +19,7 @@ const MIME_TYPES: Record<string, { type: MediaType; mime: string }> = {
 export async function POST(request: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.redirect(new URL("/login", request.url), 303);
+    return NextResponse.redirect(new URL("/login", baseUrl(request)), 303);
   }
 
   const formData = await request.formData();
@@ -26,13 +27,13 @@ export async function POST(request: NextRequest) {
   const file = formData.get("file");
 
   if (!title || !(file instanceof File) || file.size === 0) {
-    return NextResponse.redirect(new URL("/upload?error=missing", request.url), 303);
+    return NextResponse.redirect(new URL("/upload?error=missing", baseUrl(request)), 303);
   }
 
   const ext = path.extname(file.name).toLowerCase();
   const kind = MIME_TYPES[ext];
   if (!kind) {
-    return NextResponse.redirect(new URL("/upload?error=type", request.url), 303);
+    return NextResponse.redirect(new URL("/upload?error=type", baseUrl(request)), 303);
   }
 
   const subdir = kind.type === MediaType.AUDIO ? "sound" : "video";
@@ -55,5 +56,5 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  return NextResponse.redirect(new URL("/", request.url), 303);
+  return NextResponse.redirect(new URL("/", baseUrl(request)), 303);
 }
