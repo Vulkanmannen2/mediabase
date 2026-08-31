@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mediabase Docs</title>
+<style>
+  :root {
+    --paper-050: #15161a;
+    --paper-100: #1c1e24;
+    --ink-950: #f1ede2;
+    --ink-800: #cfc9b8;
+    --ink-600: #96907e;
+    --line: rgba(241, 237, 226, 0.14);
+    --ember-600: #e8a54f;
+    --ember-500: #dd9640;
+    --ember-tint: rgba(232, 165, 79, 0.1);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper-050);
+    color: var(--ink-800);
+    font-family: -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.6;
+  }
+  main { max-width: 640px; margin: 0 auto; padding: 3rem 1.4rem 6rem; }
+  h1 {
+    font-family: Iowan Old Style, "Palatino Linotype", Palatino, Georgia, serif;
+    color: var(--ink-950);
+    font-size: 1.85rem;
+    margin: 0 0 0.5rem;
+  }
+  .subtitle { color: var(--ink-600); font-size: 0.95rem; margin: 0 0 2.4rem; }
+  .doc-list { display: flex; flex-direction: column; gap: 0.8rem; list-style: none; padding: 0; margin: 0; }
+  .doc-list a {
+    display: block;
+    text-decoration: none;
+    color: var(--ink-950);
+    background: var(--paper-100);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 1rem 1.1rem;
+    transition: border-color 0.15s;
+  }
+  .doc-list a:hover, .doc-list a:active { border-color: var(--ember-500); }
+  .doc-title { font-weight: 600; font-size: 1rem; }
+  .doc-desc { color: var(--ink-600); font-size: 0.85rem; margin-top: 0.25rem; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Mediabase — Docs</h1>
+  <p class="subtitle">Project documentation, kept in sync with the repo.</p>
+  <ul class="doc-list">
+    <li><a href="doc.html?src=declaration.md">
+      <div class="doc-title">Declaration</div>
+      <div class="doc-desc">What Mediabase is, ownership, and the creator-payment model</div>
+    </a></li>
+    <li><a href="doc.html?src=planning.md">
+      <div class="doc-title">Planning</div>
+      <div class="doc-desc">Stack, deployment workflow, and the v1/v2 specifications</div>
+    </a></li>
+    <li><a href="doc.html?src=stack.md">
+      <div class="doc-title">Stack</div>
+      <div class="doc-desc">Every tool in the stack and the job it does</div>
+    </a></li>
+    <li><a href="architecture.html">
+      <div class="doc-title">Architecture</div>
+      <div class="doc-desc">How Loopia, Coolify, the database, and the app connect — with a diagram</div>
+    </a></li>
+    <li><a href="app-design.html">
+      <div class="doc-title">App Design (draft)</div>
+      <div class="doc-desc">Screen flow, layouts for the 8 media categories, and the database design</div>
+    </a></li>
+  </ul>
+</main>
+</body>
+</html>

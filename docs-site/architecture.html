@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mediabase — Architecture</title>
+<style>
+  :root {
+    --paper-050: #15161a;
+    --paper-100: #1c1e24;
+    --ink-950: #f1ede2;
+    --ink-800: #cfc9b8;
+    --ink-600: #96907e;
+    --line: rgba(241, 237, 226, 0.14);
+    --ember-600: #e8a54f;
+    --ember-500: #dd9640;
+    --ember-tint: rgba(232, 165, 79, 0.12);
+    --warn-border: rgba(232, 165, 79, 0.3);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper-050);
+    color: var(--ink-800);
+    font-family: -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.6;
+  }
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 3.5rem 1.5rem 6rem;
+  }
+  h1, h2, h3 {
+    font-family: Iowan Old Style, "Palatino Linotype", Palatino, Georgia, serif;
+    color: var(--ink-950);
+    text-wrap: balance;
+    font-weight: 600;
+  }
+  .eyebrow {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--ember-600);
+    margin: 0 0 0.9rem;
+  }
+  h1 { font-size: 2rem; letter-spacing: -0.01em; margin: 0 0 0.6rem; }
+  .subtitle { color: var(--ink-600); font-size: 1rem; max-width: 60ch; margin: 0 0 2.5rem; }
+  header.doc-head { border-bottom: 1px solid var(--line); padding-bottom: 2rem; margin-bottom: 2.8rem; }
+  section { margin-bottom: 3.2rem; }
+  section > h2 { font-size: 1.35rem; margin: 0 0 1.1rem; }
+  h3 { font-size: 1.05rem; margin: 1.6rem 0 0.5rem; }
+  p { margin: 0 0 1rem; max-width: 72ch; }
+  ul, ol { margin: 0 0 1rem; padding-left: 1.3rem; }
+  li { margin-bottom: 0.4rem; max-width: 68ch; }
+  strong { color: var(--ink-950); font-weight: 600; }
+  code {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.87em;
+    background: var(--paper-100);
+    padding: 0.1em 0.4em;
+    border-radius: 3px;
+  }
+  a { color: var(--ember-500); }
+
+  .diagram-scroll {
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--paper-100);
+    padding: 0.5rem;
+    margin-bottom: 0.8rem;
+  }
+  .diagram-scroll svg { display: block; min-width: 760px; }
+  figcaption { font-size: 0.85rem; color: var(--ink-600); max-width: 70ch; }
+
+  .callout {
+    background: var(--ember-tint);
+    border: 1px solid var(--warn-border);
+    border-radius: 6px;
+    padding: 1rem 1.2rem;
+    margin: 1rem 0;
+  }
+  .callout .label {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ember-600);
+    display: block;
+    margin-bottom: 0.45rem;
+  }
+  .callout p:last-child { margin-bottom: 0; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin: 0.5rem 0 1rem; }
+  th, td { text-align: left; padding: 0.5rem 0.7rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase;
+    color: var(--ink-600); font-weight: 500;
+  }
+  td code { white-space: nowrap; }
+  .table-scroll { overflow-x: auto; }
+
+  svg text { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  .box-label { font-size: 12px; fill: currentColor; }
+  .box-sub { font-size: 10px; fill: currentColor; opacity: 0.62; }
+  .arrow-label { font-size: 10.5px; fill: currentColor; opacity: 0.85; }
+  .grp-label { font-size: 11px; letter-spacing: 0.06em; fill: var(--ember-500); }
+</style>
+</head>
+<body>
+<main>
+
+<header class="doc-head">
+  <p class="eyebrow">Internal reference — last verified against the live deploy</p>
+  <h1>Mediabase — architecture</h1>
+  <p class="subtitle">How the pieces actually connect: Loopia, the domain, Coolify, the database, and the app. Written from the real deployed system, including the two things that broke and why.</p>
+</header>
+
+<section>
+  <h2>The full picture</h2>
+
+  <figure>
+    <div class="diagram-scroll">
+      <svg viewBox="0 0 1040 780" role="img" aria-label="A browser resolves media.solutionsskovde.se via a Loopia DNS A record to the Hetzner VPS's IP. Coolify's Traefik proxy on that VPS terminates SSL and routes to the Next.js app container on port 3000. The app reads and writes metadata in a Postgres container over Coolify's internal Docker network, and serves media files from a directory bind-mounted from the host filesystem. Separately, pushing to GitHub's main branch, plus a manual Deploy click in Coolify, triggers Railpack to build a new app container from the repo.">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="currentColor" />
+          </marker>
+        </defs>
+
+        <!-- VPS boundary -->
+        <rect x="40" y="150" width="700" height="560" rx="10" fill="none" stroke="currentColor" stroke-opacity="0.35" stroke-dasharray="5 4" />
+        <text x="58" y="176" class="grp-label">HETZNER VPS · 89.167.80.108</text>
+        <text x="58" y="192" class="box-sub">containers orchestrated by Coolify (dashboard on :8000)</text>
+
+        <!-- Loopia -->
+        <rect x="370" y="20" width="260" height="54" rx="6" fill="none" stroke="currentColor" />
+        <text x="500" y="43" text-anchor="middle" class="box-label">Loopia DNS</text>
+        <text x="500" y="60" text-anchor="middle" class="box-sub">A record: media → 89.167.80.108</text>
+
+        <!-- Browser -->
+        <rect x="370" y="110" width="260" height="46" rx="6" fill="none" stroke="currentColor" />
+        <text x="500" y="130" text-anchor="middle" class="box-label">Browser</text>
+        <text x="500" y="146" text-anchor="middle" class="box-sub">requests media.solutionsskovde.se</text>
+
+        <!-- Traefik proxy -->
+        <rect x="370" y="196" width="260" height="52" rx="6" fill="none" stroke="currentColor" />
+        <text x="500" y="218" text-anchor="middle" class="box-label">Coolify proxy (Traefik)</text>
+        <text x="500" y="234" text-anchor="middle" class="box-sub">terminates SSL, routes by domain</text>
+
+        <!-- App container -->
+        <rect x="370" y="290" width="260" height="62" rx="6" fill="none" stroke="var(--ember-500)" stroke-width="1.6" />
+        <text x="500" y="315" text-anchor="middle" class="box-label" fill="var(--ember-500)">App container (Next.js)</text>
+        <text x="500" y="331" text-anchor="middle" class="box-sub">port 3000, reads DATABASE_URL</text>
+
+        <!-- Postgres -->
+        <rect x="90" y="420" width="200" height="60" rx="6" fill="none" stroke="currentColor" />
+        <text x="190" y="444" text-anchor="middle" class="box-label">Postgres container</text>
+        <text x="190" y="460" text-anchor="middle" class="box-sub">production DB, internal-only</text>
+
+        <!-- Bind mount -->
+        <rect x="420" y="420" width="260" height="60" rx="6" fill="none" stroke="currentColor" />
+        <text x="550" y="444" text-anchor="middle" class="box-label">/app/public/media</text>
+        <text x="550" y="460" text-anchor="middle" class="box-sub">bind mount → host directory</text>
+
+        <!-- Host filesystem -->
+        <rect x="420" y="540" width="260" height="50" rx="6" fill="none" stroke="currentColor" stroke-opacity="0.7" />
+        <text x="550" y="562" text-anchor="middle" class="box-label" opacity="0.85">VPS host filesystem</text>
+        <text x="550" y="577" text-anchor="middle" class="box-sub">/data/coolify/mediaplatform/media</text>
+
+        <!-- GitHub -->
+        <rect x="760" y="290" width="220" height="52" rx="6" fill="none" stroke="currentColor" />
+        <text x="870" y="312" text-anchor="middle" class="box-label">GitHub</text>
+        <text x="870" y="328" text-anchor="middle" class="box-sub">Vulkanmannen2/mediabase</text>
+
+        <!-- Your Mac -->
+        <rect x="760" y="540" width="220" height="52" rx="6" fill="none" stroke="currentColor" stroke-dasharray="4 3" opacity="0.75" />
+        <text x="870" y="562" text-anchor="middle" class="box-label" opacity="0.85">Your Mac</text>
+        <text x="870" y="578" text-anchor="middle" class="box-sub">scp + ssh mediaplatform</text>
+
+        <!-- Local dev (separate, unconnected) -->
+        <rect x="40" y="700" width="700" height="60" rx="6" fill="none" stroke="currentColor" stroke-dasharray="3 3" opacity="0.5" />
+        <text x="60" y="724" class="box-label" opacity="0.7">Local dev — completely separate</text>
+        <text x="60" y="740" class="box-sub">your Mac: local Postgres 16 + npm run dev — no connection to production, own copy of the data</text>
+
+        <!-- Arrows -->
+        <line x1="500" y1="74" x2="500" y2="108" stroke="currentColor" marker-end="url(#arrow)" />
+        <text x="512" y="95" class="arrow-label">resolves domain</text>
+
+        <line x1="500" y1="156" x2="500" y2="194" stroke="currentColor" marker-end="url(#arrow)" />
+        <text x="512" y="180" class="arrow-label">HTTPS request</text>
+
+        <line x1="500" y1="248" x2="500" y2="288" stroke="currentColor" marker-end="url(#arrow)" />
+        <text x="512" y="272" class="arrow-label">reverse proxy → :3000</text>
+
+        <line x1="450" y1="352" x2="220" y2="418" stroke="currentColor" marker-end="url(#arrow)" />
+        <text x="270" y="390" class="arrow-label">Prisma: read/write metadata</text>
+
+        <line x1="540" y1="352" x2="550" y2="418" stroke="currentColor" marker-end="url(#arrow)" />
+        <text x="558" y="390" class="arrow-label">stream file bytes</text>
+
+        <line x1="550" y1="480" x2="550" y2="538" stroke="currentColor" marker-end="url(#arrow)" opacity="0.8" />
+        <text x="562" y="512" class="arrow-label" opacity="0.8">mounted from</text>
+
+        <line x1="758" y1="566" x2="682" y2="566" stroke="currentColor" marker-end="url(#arrow)" />
+        <text x="720" y="550" text-anchor="middle" class="arrow-label" style="font-size:9.5px">scp</text>
+
+        <line x1="790" y1="342" x2="620" y2="308" stroke="currentColor" marker-end="url(#arrow)" />
+        <text x="705" y="300" text-anchor="middle" class="arrow-label">build &amp; deploy</text>
+
+        <line x1="870" y1="538" x2="870" y2="344" stroke="currentColor" marker-end="url(#arrow)" opacity="0.8" />
+        <text x="882" y="440" class="arrow-label" opacity="0.8">git push</text>
+      </svg>
+    </div>
+    <figcaption>Three flows share this one server: the request path (top, solid), the deploy path (right), and the manual media-upload path (bottom right, dashed — not yet automated).</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>Walking through each connection</h2>
+
+  <h3>1. Domain → server</h3>
+  <p>Loopia holds one DNS <strong>A record</strong>: the subdomain <code>media</code> under <code>solutionsskovde.se</code> points at <code>89.167.80.108</code>, the Hetzner VPS's public IP. That's Loopia's entire job here — it doesn't touch anything after the browser has the IP.</p>
+
+  <h3>2. Request path</h3>
+  <p>Every request for <code>media.solutionsskovde.se</code> lands on Coolify's built-in proxy (Traefik), which terminates SSL (a Let's Encrypt certificate, auto-renewed) and forwards it to the app container's internal port 3000. There's no separately configured Nginx — Coolify's proxy is the only thing in that role, on purpose (see <code>STACK.md</code>).</p>
+
+  <h3>3. The app talks to two things</h3>
+  <ul>
+    <li><strong>Postgres</strong>, for everything in the <code>Media</code> table — via Prisma, using the internal connection string set as the <code>DATABASE_URL</code> environment variable in Coolify. The database container has no public access; only other containers on the same Docker network can reach it.</li>
+    <li><strong>The local filesystem</strong>, for the actual audio/video bytes, served directly by Next.js's static file handling from <code>public/media</code>.</li>
+  </ul>
+
+  <h3>4. Media storage — a bind mount, not the Docker image</h3>
+  <p><code>public/media/</code> is deliberately <code>.gitignore</code>d — a 600MB video has no business going through GitHub. Instead, Coolify has a <strong>directory mount</strong> configured on the app: the host path <code>/data/coolify/mediaplatform/media</code> is bind-mounted into the container at <code>/app/public/media</code>. New files land by <code>scp</code>-ing them straight to that host path from your Mac (there's an SSH shortcut for this: <code>ssh mediaplatform</code>).</p>
+
+  <h3>5. Deploy path</h3>
+  <p>Pushing to <code>main</code> on GitHub doesn't trigger anything by itself yet — deploys happen when you click <strong>Deploy</strong> in Coolify, which pulls the latest commit and builds a fresh image using Railpack (Coolify's builder), then swaps the running container for the new one.</p>
+</section>
+
+<section>
+  <h2>Two things that broke, and why</h2>
+
+  <div class="callout">
+    <span class="label">Prisma client wasn't generated in production</span>
+    <p>The build failed with <code>Module not found: '@/app/generated/prisma/client'</code>. Locally, <code>npm install</code> auto-generates the Prisma client via a <code>postinstall</code> hook — but Railpack skips install scripts (a common security/reproducibility default for build platforms), so that hook never ran. Fix: <code>package.json</code>'s <code>build</code> script now explicitly runs <code>prisma generate &amp;&amp; next build</code>, so generation never depends on an implicit hook.</p>
+  </div>
+
+  <div class="callout">
+    <span class="label">Media files 404'd even though they existed on disk</span>
+    <p>After the first file upload, every play button was greyed out — the browser's media requests returned Next.js's own 404 page. The files were confirmed present, correctly permissioned, inside the container. The cause: the app's Node process had already started (and Next.js appears to do its static-asset resolution relative to that running process) <em>before</em> the <code>scp</code> transfer finished writing files into the mounted folder. Restarting the container — no rebuild needed — fixed it immediately. <strong>Takeaway: after adding new files to the mounted media folder, restart the app container</strong> before expecting them to be servable.</p>
+  </div>
+</section>
+
+<section>
+  <h2>Known manual steps (not yet automated)</h2>
+  <ul>
+    <li><strong>Schema changes</strong> — after changing <code>prisma/schema.prisma</code> and deploying, migrations don't run automatically. Run them by hand: <code>ssh mediaplatform 'docker exec &lt;container-name&gt; npx prisma migrate deploy'</code>.</li>
+    <li><strong>New media files</strong> — <code>scp</code> them to <code>/data/coolify/mediaplatform/media/&lt;sound|video&gt;/</code> on the VPS, run the seed script inside the container (<code>npx --yes tsx prisma/seed.ts</code>), then restart the container so Next.js picks the files up.</li>
+    <li><strong>Container name changes on every deploy</strong> — it's suffixed with a build hash, so re-check the current name with <code>docker ps</code> before running the two commands above.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Quick reference</h2>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Thing</th><th>Where</th></tr></thead>
+      <tbody>
+        <tr><td>Live site</td><td><code>https://media.solutionsskovde.se</code></td></tr>
+        <tr><td>Coolify dashboard</td><td><code>http://89.167.80.108:8000</code></td></tr>
+        <tr><td>SSH to the VPS</td><td><code>ssh mediaplatform</code> (alias in <code>~/.ssh/config</code>)</td></tr>
+        <tr><td>SSH key</td><td><code>~/.ssh/mediaplatform_hetzner</code> — never committed to git</td></tr>
+        <tr><td>Production <code>DATABASE_URL</code></td><td>Coolify → app → Environment Variables (not in this repo)</td></tr>
+        <tr><td>Media on the VPS host</td><td><code>/data/coolify/mediaplatform/media/</code></td></tr>
+        <tr><td>GitHub repo</td><td><code>github.com/Vulkanmannen2/mediabase</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+</main>
+</body>
+</html>

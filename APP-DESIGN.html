@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mediabase — App Design Draft</title>
+<style>
+  :root {
+    --paper-050: #15161a;
+    --paper-100: #1c1e24;
+    --ink-950: #f1ede2;
+    --ink-800: #cfc9b8;
+    --ink-600: #96907e;
+    --line: rgba(241, 237, 226, 0.14);
+    --ember-600: #e8a54f;
+    --ember-500: #dd9640;
+    --ember-tint: rgba(232, 165, 79, 0.12);
+    --warn-border: rgba(232, 165, 79, 0.3);
+    --wire-bg: #eeece5;
+    --wire-line: #4a4740;
+    --wire-fill: #f8f7f2;
+    --wire-text: #201f1a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper-050);
+    color: var(--ink-800);
+    font-family: -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.6;
+  }
+  main { max-width: 1040px; margin: 0 auto; padding: 3.5rem 1.5rem 6rem; }
+  h1, h2, h3 {
+    font-family: Iowan Old Style, "Palatino Linotype", Palatino, Georgia, serif;
+    color: var(--ink-950);
+    text-wrap: balance;
+    font-weight: 600;
+  }
+  .eyebrow {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.72rem; letter-spacing: 0.11em; text-transform: uppercase;
+    color: var(--ember-600); margin: 0 0 0.9rem;
+  }
+  h1 { font-size: 2rem; letter-spacing: -0.01em; margin: 0 0 0.6rem; }
+  .subtitle { color: var(--ink-600); font-size: 1rem; max-width: 68ch; margin: 0 0 2.5rem; }
+  header.doc-head { border-bottom: 1px solid var(--line); padding-bottom: 2rem; margin-bottom: 2.8rem; }
+  section { margin-bottom: 3.4rem; }
+  section > h2 { font-size: 1.4rem; margin: 0 0 1.1rem; }
+  h3 { font-size: 1.05rem; margin: 1.6rem 0 0.5rem; }
+  p { margin: 0 0 1rem; max-width: 74ch; }
+  ul, ol { margin: 0 0 1rem; padding-left: 1.3rem; }
+  li { margin-bottom: 0.4rem; max-width: 70ch; }
+  strong { color: var(--ink-950); font-weight: 600; }
+  code {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.87em; background: var(--paper-100); padding: 0.1em 0.4em; border-radius: 3px;
+  }
+
+  .callout {
+    background: var(--ember-tint); border: 1px solid var(--warn-border); border-radius: 6px;
+    padding: 1rem 1.2rem; margin: 1rem 0;
+  }
+  .callout .label {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.7rem;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--ember-600);
+    display: block; margin-bottom: 0.45rem;
+  }
+  .callout p:last-child { margin-bottom: 0; }
+
+  .diagram-scroll {
+    overflow-x: auto; border: 1px solid var(--line); border-radius: 8px;
+    background: var(--paper-100); padding: 1rem; margin-bottom: 0.8rem;
+  }
+  .diagram-scroll svg { display: block; }
+  figcaption { font-size: 0.85rem; color: var(--ink-600); max-width: 74ch; }
+
+  /* Wireframe gallery */
+  .wire-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.6rem;
+    margin: 1.2rem 0 0.6rem;
+  }
+  .wire-card {
+    background: var(--paper-100);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.7rem;
+  }
+  .wire-card svg { display: block; max-width: 100%; height: auto; }
+  .wire-title { font-size: 0.92rem; color: var(--ink-950); font-weight: 600; text-align: center; }
+  .wire-note { font-size: 0.8rem; color: var(--ink-600); text-align: center; max-width: 22ch; }
+  .wire-note code { font-size: 0.78em; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin: 0.5rem 0 1rem; }
+  th, td { text-align: left; padding: 0.55rem 0.7rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.68rem;
+    letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-600); font-weight: 500;
+  }
+  .table-scroll { overflow-x: auto; }
+
+  svg text { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  .box-label { font-size: 12px; fill: currentColor; }
+  .box-sub { font-size: 9.5px; fill: currentColor; opacity: 0.62; }
+  .arrow-label { font-size: 10px; fill: currentColor; opacity: 0.85; }
+  .grp-label { font-size: 11px; letter-spacing: 0.06em; fill: var(--ember-500); }
+
+  /* wireframe internals — always rendered as a light "paper sketch" regardless of doc theme */
+  .wf-text { font-family: -apple-system, "Segoe UI", Arial, sans-serif; fill: var(--wire-text); }
+</style>
+</head>
+<body>
+<main>
+
+<header class="doc-head">
+  <p class="eyebrow">First draft — for discussion, not final</p>
+  <h1>Mediabase — from single-list app to a real media app</h1>
+  <p class="subtitle">Screen flow, layouts for the 8 categories on your home screen, and a database design to back them. Built from your Home wireframe — same sketch style carried through every screen below.</p>
+</header>
+
+<section>
+  <h2>Your reference — Home</h2>
+  <p>Confirming I read this right before building on top of it: a hamburger menu and search bar up top, open space in the middle (room for something later — recently played, a hero banner, not decided yet), and the 8 categories as a fixed 2×4 grid at the bottom.</p>
+  <div class="wire-gallery" style="grid-template-columns: minmax(200px, 260px);">
+    <div class="wire-card">
+      <svg viewBox="0 0 220 420" width="220" height="420" role="img" aria-label="Home screen: hamburger menu and search bar at top, empty middle area, and an eight-tile grid at the bottom for Music, Podcasts, Movies, Shorts, Series, Audio Books, News, and Videos.">
+        <rect x="4" y="4" width="212" height="412" rx="26" fill="var(--wire-fill)" stroke="var(--wire-line)" stroke-width="1.6"/>
+        <rect x="18" y="22" width="34" height="34" rx="8" fill="none" stroke="var(--wire-line)"/>
+        <rect x="24" y="30" width="22" height="4" fill="var(--wire-line)"/>
+        <rect x="24" y="39" width="22" height="4" fill="var(--wire-line)"/>
+        <rect x="24" y="48" width="22" height="4" fill="var(--wire-line)"/>
+        <rect x="60" y="22" width="138" height="34" rx="8" fill="none" stroke="var(--wire-line)"/>
+        <text x="129" y="43" text-anchor="middle" class="wf-text" font-size="11">Search</text>
+        <!-- 8-tile grid -->
+        <g font-size="9">
+          <rect x="18" y="300" width="42" height="42" rx="8" fill="none" stroke="var(--wire-line)"/>
+          <text x="39" y="325" text-anchor="middle" class="wf-text">Music</text>
+          <rect x="68" y="300" width="42" height="42" rx="8" fill="none" stroke="var(--wire-line)"/>
+          <text x="89" y="321" text-anchor="middle" class="wf-text">Pod-</text>
+          <text x="89" y="330" text-anchor="middle" class="wf-text">casts</text>
+          <rect x="118" y="300" width="42" height="42" rx="8" fill="none" stroke="var(--wire-line)"/>
+          <text x="139" y="325" text-anchor="middle" class="wf-text">Movies</text>
+          <rect x="168" y="300" width="34" height="42" rx="8" fill="none" stroke="var(--wire-line)"/>
+          <text x="185" y="325" text-anchor="middle" class="wf-text">Shorts</text>
+
+          <rect x="18" y="350" width="42" height="42" rx="8" fill="none" stroke="var(--wire-line)"/>
+          <text x="39" y="375" text-anchor="middle" class="wf-text">Series</text>
+          <rect x="68" y="350" width="42" height="42" rx="8" fill="none" stroke="var(--wire-line)"/>
+          <text x="89" y="371" text-anchor="middle" class="wf-text">Audio</text>
+          <text x="89" y="380" text-anchor="middle" class="wf-text">Books</text>
+          <rect x="118" y="350" width="42" height="42" rx="8" fill="none" stroke="var(--wire-line)"/>
+          <text x="139" y="375" text-anchor="middle" class="wf-text">News</text>
+          <rect x="168" y="350" width="34" height="42" rx="8" fill="none" stroke="var(--wire-line)"/>
+          <text x="185" y="375" text-anchor="middle" class="wf-text">Videos</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Screen flow</h2>
+  <p>Everything eventually leads to the Player. The one real branch is whether a category has sub-items to browse first (an album's tracks, a show's episodes) or plays directly.</p>
+  <figure>
+    <div class="diagram-scroll">
+      <svg viewBox="0 0 1040 610" role="img" aria-label="After login, Home shows search and the 8 category tiles. Tapping a category opens a category screen, styled as a grid, list, or feed depending on the category. Music, Podcasts, Series, and Audio Books route through a shared Collection Detail screen listing tracks, episodes, or chapters before playing. Movies, Shorts, News, and Videos play directly. Search results and uploads branch separately from Home.">
+        <defs>
+          <marker id="arrow2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="currentColor" />
+          </marker>
+        </defs>
+
+        <rect x="410" y="20" width="220" height="50" rx="6" fill="none" stroke="currentColor" />
+        <text x="520" y="50" text-anchor="middle" class="box-label">Login / Signup</text>
+
+        <rect x="380" y="120" width="280" height="64" rx="6" fill="none" stroke="var(--ember-500)" stroke-width="1.6" />
+        <text x="520" y="146" text-anchor="middle" class="box-label" fill="var(--ember-500)">Home</text>
+        <text x="520" y="162" text-anchor="middle" class="box-sub">search bar + 8 category tiles</text>
+
+        <rect x="60" y="128" width="150" height="48" rx="6" fill="none" stroke="currentColor" opacity="0.85" />
+        <text x="135" y="156" text-anchor="middle" class="box-label">Upload</text>
+
+        <rect x="830" y="128" width="150" height="48" rx="6" fill="none" stroke="currentColor" opacity="0.85" />
+        <text x="905" y="150" text-anchor="middle" class="box-label">Search results</text>
+        <text x="905" y="163" text-anchor="middle" class="box-sub">flat list, mixed types</text>
+
+        <rect x="380" y="250" width="280" height="64" rx="6" fill="none" stroke="currentColor" />
+        <text x="520" y="273" text-anchor="middle" class="box-label">Category screen</text>
+        <text x="520" y="289" text-anchor="middle" class="box-sub">grid · list · feed — see patterns below</text>
+        <text x="520" y="303" text-anchor="middle" class="box-sub" opacity="0.5">one of the 8 tiles</text>
+
+        <rect x="150" y="390" width="260" height="60" rx="6" fill="none" stroke="currentColor" />
+        <text x="280" y="413" text-anchor="middle" class="box-label">Collection detail</text>
+        <text x="280" y="429" text-anchor="middle" class="box-sub">Music, Podcasts, Series, Audio Books</text>
+
+        <rect x="440" y="510" width="200" height="60" rx="6" fill="none" stroke="var(--ember-500)" stroke-width="1.6" />
+        <text x="540" y="533" text-anchor="middle" class="box-label" fill="var(--ember-500)">Player</text>
+        <text x="540" y="549" text-anchor="middle" class="box-sub">universal, every path ends here</text>
+
+        <!-- arrows -->
+        <line x1="520" y1="70" x2="520" y2="118" stroke="currentColor" marker-end="url(#arrow2)" />
+
+        <line x1="380" y1="152" x2="212" y2="152" stroke="currentColor" marker-end="url(#arrow2)" opacity="0.85" />
+        <text x="296" y="144" text-anchor="middle" class="arrow-label" opacity="0.8">nav</text>
+
+        <line x1="660" y1="152" x2="828" y2="152" stroke="currentColor" marker-end="url(#arrow2)" opacity="0.85" />
+        <text x="744" y="144" text-anchor="middle" class="arrow-label" opacity="0.8">search</text>
+
+        <line x1="520" y1="184" x2="520" y2="248" stroke="currentColor" marker-end="url(#arrow2)" />
+        <text x="536" y="220" class="arrow-label">tap tile</text>
+
+        <line x1="460" y1="314" x2="330" y2="388" stroke="currentColor" marker-end="url(#arrow2)" />
+        <text x="345" y="345" class="arrow-label">grouped: has sub-items</text>
+
+        <line x1="590" y1="314" x2="560" y2="508" stroke="currentColor" marker-end="url(#arrow2)" />
+        <text x="600" y="410" class="arrow-label">standalone: plays directly</text>
+
+        <line x1="300" y1="450" x2="470" y2="508" stroke="currentColor" marker-end="url(#arrow2)" />
+        <text x="330" y="485" class="arrow-label">tap track / episode / chapter</text>
+
+        <path d="M 905 176 C 905 350, 700 460, 620 520" fill="none" stroke="currentColor" opacity="0.7" marker-end="url(#arrow2)" />
+        <text x="800" y="330" class="arrow-label" opacity="0.7">tap result</text>
+      </svg>
+    </div>
+    <figcaption>Music, Podcasts, Series, and Audio Books route through Collection Detail (an album's tracks, a show's episodes) before playing. Movies, Shorts, News, and Videos play directly from the category screen.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>The 4 screen patterns</h2>
+  <p>Instead of 8 bespoke layouts, the categories share 4 real shapes. Below each is one representative wireframe — the others just swap cover proportions or which metadata line shows.</p>
+
+  <div class="wire-gallery">
+    <div class="wire-card">
+      <svg viewBox="0 0 220 420" width="220" height="380" role="img" aria-label="Grid pattern: back arrow and category title at top, a grid of six square cover tiles with captions below.">
+        <rect x="4" y="4" width="212" height="412" rx="26" fill="var(--wire-fill)" stroke="var(--wire-line)" stroke-width="1.6"/>
+        <path d="M28 38 L20 30 L28 22" fill="none" stroke="var(--wire-line)" stroke-width="2"/>
+        <text x="110" y="36" text-anchor="middle" class="wf-text" font-size="12">Movies</text>
+        <g font-size="8">
+          <rect x="18" y="60" width="56" height="80" rx="6" fill="none" stroke="var(--wire-line)"/>
+          <text x="46" y="150" text-anchor="middle" class="wf-text">Title A</text>
+          <rect x="82" y="60" width="56" height="80" rx="6" fill="none" stroke="var(--wire-line)"/>
+          <text x="110" y="150" text-anchor="middle" class="wf-text">Title B</text>
+          <rect x="146" y="60" width="56" height="80" rx="6" fill="none" stroke="var(--wire-line)"/>
+          <text x="174" y="150" text-anchor="middle" class="wf-text">Title C</text>
+          <rect x="18" y="170" width="56" height="80" rx="6" fill="none" stroke="var(--wire-line)"/>
+          <text x="46" y="260" text-anchor="middle" class="wf-text">Title D</text>
+          <rect x="82" y="170" width="56" height="80" rx="6" fill="none" stroke="var(--wire-line)"/>
+          <text x="110" y="260" text-anchor="middle" class="wf-text">Title E</text>
+          <rect x="146" y="170" width="56" height="80" rx="6" fill="none" stroke="var(--wire-line)"/>
+          <text x="174" y="260" text-anchor="middle" class="wf-text">Title F</text>
+        </g>
+      </svg>
+      <span class="wire-title">Grid</span>
+      <span class="wire-note">Music (square), Movies &amp; Series (portrait), Videos (landscape)</span>
+    </div>
+
+    <div class="wire-card">
+      <svg viewBox="0 0 220 420" width="220" height="380" role="img" aria-label="List pattern: back arrow and category title at top, five stacked rows each with a small thumbnail, a title, a subtitle, and a duration.">
+        <rect x="4" y="4" width="212" height="412" rx="26" fill="var(--wire-fill)" stroke="var(--wire-line)" stroke-width="1.6"/>
+        <path d="M28 38 L20 30 L28 22" fill="none" stroke="var(--wire-line)" stroke-width="2"/>
+        <text x="110" y="36" text-anchor="middle" class="wf-text" font-size="12">Podcasts</text>
+        <g font-size="8">
+          <rect x="18" y="58" width="44" height="44" rx="6" fill="none" stroke="var(--wire-line)"/>
+          <text x="70" y="72" class="wf-text" font-size="9">Show title</text>
+          <text x="70" y="86" class="wf-text" opacity="0.65">Host name</text>
+          <text x="196" y="82" text-anchor="end" class="wf-text" opacity="0.5">24m</text>
+          <line x1="18" y1="112" x2="202" y2="112" stroke="var(--wire-line)" opacity="0.4"/>
+
+          <rect x="18" y="122" width="44" height="44" rx="6" fill="none" stroke="var(--wire-line)"/>
+          <text x="70" y="136" class="wf-text" font-size="9">Show title</text>
+          <text x="70" y="150" class="wf-text" opacity="0.65">Host name</text>
+          <text x="196" y="146" text-anchor="end" class="wf-text" opacity="0.5">41m</text>
+          <line x1="18" y1="176" x2="202" y2="176" stroke="var(--wire-line)" opacity="0.4"/>
+
+          <rect x="18" y="186" width="44" height="44" rx="6" fill="none" stroke="var(--wire-line)"/>
+          <text x="70" y="200" class="wf-text" font-size="9">Show title</text>
+          <text x="70" y="214" class="wf-text" opacity="0.65">Host name</text>
+          <text x="196" y="210" text-anchor="end" class="wf-text" opacity="0.5">18m</text>
+          <line x1="18" y1="240" x2="202" y2="240" stroke="var(--wire-line)" opacity="0.4"/>
+
+          <rect x="18" y="250" width="44" height="44" rx="6" fill="none" stroke="var(--wire-line)"/>
+          <text x="70" y="264" class="wf-text" font-size="9">Show title</text>
+          <text x="70" y="278" class="wf-text" opacity="0.65">Host name</text>
+          <text x="196" y="274" text-anchor="end" class="wf-text" opacity="0.5">55m</text>
+          <line x1="18" y1="304" x2="202" y2="304" stroke="var(--wire-line)" opacity="0.4"/>
+
+          <rect x="18" y="314" width="44" height="44" rx="6" fill="none" stroke="var(--wire-line)"/>
+          <text x="70" y="328" class="wf-text" font-size="9">Show title</text>
+          <text x="70" y="342" class="wf-text" opacity="0.65">Host name</text>
+          <text x="196" y="338" text-anchor="end" class="wf-text" opacity="0.5">12m</text>
+        </g>
+      </svg>
+      <span class="wire-title">List</span>
+      <span class="wire-note">Podcasts (host), Audio Books (author), News (source + date)</span>
+    </div>
+
+    <div class="wire-card">
+      <svg viewBox="0 0 220 420" width="220" height="380" role="img" aria-label="Shorts feed pattern: a single full-bleed vertical video filling the screen, title and creator overlaid at the bottom left, action icons stacked on the right, and swipe hints at top and bottom.">
+        <rect x="4" y="4" width="212" height="412" rx="26" fill="var(--wire-fill)" stroke="var(--wire-line)" stroke-width="1.6"/>
+        <rect x="10" y="10" width="200" height="400" rx="22" fill="none" stroke="var(--wire-line)" stroke-dasharray="3 3" opacity="0.7"/>
+        <text x="110" y="30" text-anchor="middle" class="wf-text" font-size="9" opacity="0.6">▲ swipe for next</text>
+        <circle cx="188" cy="240" r="12" fill="none" stroke="var(--wire-line)"/>
+        <circle cx="188" cy="280" r="12" fill="none" stroke="var(--wire-line)"/>
+        <circle cx="188" cy="320" r="12" fill="none" stroke="var(--wire-line)"/>
+        <text x="20" y="370" class="wf-text" font-size="10">@creator</text>
+        <text x="20" y="384" class="wf-text" font-size="9" opacity="0.65">clip caption</text>
+        <text x="110" y="404" text-anchor="middle" class="wf-text" font-size="9" opacity="0.6">▼ swipe for next</text>
+      </svg>
+      <span class="wire-title">Feed</span>
+      <span class="wire-note">Shorts only — immersive, no category grid at all</span>
+    </div>
+
+    <div class="wire-card">
+      <svg viewBox="0 0 220 420" width="220" height="380" role="img" aria-label="Collection detail pattern: back arrow at top, a large square cover image, title and credit line below it, then a numbered list of tracks or episodes with durations.">
+        <rect x="4" y="4" width="212" height="412" rx="26" fill="var(--wire-fill)" stroke="var(--wire-line)" stroke-width="1.6"/>
+        <path d="M28 30 L20 22 L28 14" fill="none" stroke="var(--wire-line)" stroke-width="2"/>
+        <rect x="60" y="26" width="100" height="100" rx="8" fill="none" stroke="var(--wire-line)"/>
+        <text x="110" y="144" text-anchor="middle" class="wf-text" font-size="11">Album / Show title</text>
+        <text x="110" y="158" text-anchor="middle" class="wf-text" font-size="9" opacity="0.65">Artist / Host name</text>
+        <g font-size="8.5">
+          <text x="24" y="184" class="wf-text" opacity="0.6">1</text>
+          <text x="40" y="184" class="wf-text">Track / episode title</text>
+          <text x="196" y="184" text-anchor="end" class="wf-text" opacity="0.5">3:12</text>
+          <line x1="18" y1="192" x2="202" y2="192" stroke="var(--wire-line)" opacity="0.35"/>
+          <text x="24" y="208" class="wf-text" opacity="0.6">2</text>
+          <text x="40" y="208" class="wf-text">Track / episode title</text>
+          <text x="196" y="208" text-anchor="end" class="wf-text" opacity="0.5">2:47</text>
+          <line x1="18" y1="216" x2="202" y2="216" stroke="var(--wire-line)" opacity="0.35"/>
+          <text x="24" y="232" class="wf-text" opacity="0.6">3</text>
+          <text x="40" y="232" class="wf-text">Track / episode title</text>
+          <text x="196" y="232" text-anchor="end" class="wf-text" opacity="0.5">4:05</text>
+          <line x1="18" y1="240" x2="202" y2="240" stroke="var(--wire-line)" opacity="0.35"/>
+          <text x="24" y="256" class="wf-text" opacity="0.6">4</text>
+          <text x="40" y="256" class="wf-text">Track / episode title</text>
+          <text x="196" y="256" text-anchor="end" class="wf-text" opacity="0.5">3:33</text>
+          <line x1="18" y1="264" x2="202" y2="264" stroke="var(--wire-line)" opacity="0.35"/>
+          <text x="24" y="280" class="wf-text" opacity="0.6">5</text>
+          <text x="40" y="280" class="wf-text">Track / episode title</text>
+          <text x="196" y="280" text-anchor="end" class="wf-text" opacity="0.5">2:58</text>
+        </g>
+      </svg>
+      <span class="wire-title">Collection detail</span>
+      <span class="wire-note">Album, podcast show, series, audiobook</span>
+    </div>
+
+    <div class="wire-card">
+      <svg viewBox="0 0 220 420" width="220" height="380" role="img" aria-label="Player pattern: minimize arrow at top, a large square art area, title and subtitle below it, a progress bar, and previous, play, and next controls at the bottom.">
+        <rect x="4" y="4" width="212" height="412" rx="26" fill="var(--wire-fill)" stroke="var(--wire-line)" stroke-width="1.6"/>
+        <path d="M110 26 L100 34 L110 42" fill="none" stroke="var(--wire-line)" stroke-width="2"/>
+        <rect x="34" y="56" width="152" height="152" rx="10" fill="none" stroke="var(--wire-line)"/>
+        <text x="110" y="232" text-anchor="middle" class="wf-text" font-size="12">Track / episode title</text>
+        <text x="110" y="248" text-anchor="middle" class="wf-text" font-size="9" opacity="0.65">Artist / show name</text>
+        <line x1="34" y1="278" x2="186" y2="278" stroke="var(--wire-line)" stroke-width="2" opacity="0.5"/>
+        <circle cx="80" cy="278" r="4" fill="var(--wire-line)"/>
+        <text x="34" y="294" class="wf-text" font-size="8" opacity="0.55">1:14</text>
+        <text x="186" y="294" text-anchor="end" class="wf-text" font-size="8" opacity="0.55">3:12</text>
+        <circle cx="80" cy="330" r="14" fill="none" stroke="var(--wire-line)"/>
+        <circle cx="110" cy="330" r="20" fill="none" stroke="var(--wire-line)" stroke-width="1.6"/>
+        <circle cx="140" cy="330" r="14" fill="none" stroke="var(--wire-line)"/>
+      </svg>
+      <span class="wire-title">Player</span>
+      <span class="wire-note">Universal — same shell for every category</span>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Database design</h2>
+  <p>Not eight tables — two shapes cover every category. <strong>Collection</strong> is the optional grouping (an album, a podcast show, a series, an audiobook). <strong>Item</strong> is the actual playable thing (a track, an episode, a chapter, or a standalone movie/short/news clip/video). <strong>Person</strong> is anyone credited — artist, director, host, author, narrator — attached with a role, so the same table covers every kind of credit instead of a separate <code>director</code> column here and <code>narrator</code> column there.</p>
+
+  <figure>
+    <div class="diagram-scroll">
+      <svg viewBox="0 0 1000 480" role="img" aria-label="User uploads MediaFiles. Each Item has exactly one MediaFile and optionally belongs to a Collection. Person is credited on either a Collection or an Item, through join tables CollectionCredit and ItemCredit, each carrying a role.">
+        <defs>
+          <marker id="arrow3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="currentColor" />
+          </marker>
+        </defs>
+
+        <rect x="30" y="30" width="160" height="50" rx="6" fill="none" stroke="currentColor" opacity="0.85"/>
+        <text x="110" y="60" text-anchor="middle" class="box-label">User</text>
+
+        <rect x="30" y="150" width="160" height="56" rx="6" fill="none" stroke="currentColor" opacity="0.85"/>
+        <text x="110" y="174" text-anchor="middle" class="box-label">MediaFile</text>
+        <text x="110" y="190" text-anchor="middle" class="box-sub">the actual bytes on disk</text>
+
+        <rect x="290" y="150" width="180" height="56" rx="6" fill="none" stroke="var(--ember-500)" stroke-width="1.6"/>
+        <text x="380" y="174" text-anchor="middle" class="box-label" fill="var(--ember-500)">Item</text>
+        <text x="380" y="190" text-anchor="middle" class="box-sub">track · episode · chapter · standalone</text>
+
+        <rect x="290" y="30" width="180" height="56" rx="6" fill="none" stroke="var(--ember-500)" stroke-width="1.6"/>
+        <text x="380" y="54" text-anchor="middle" class="box-label" fill="var(--ember-500)">Collection</text>
+        <text x="380" y="70" text-anchor="middle" class="box-sub">album · show · book — optional</text>
+
+        <rect x="600" y="90" width="150" height="50" rx="6" fill="none" stroke="currentColor" opacity="0.85"/>
+        <text x="675" y="120" text-anchor="middle" class="box-label">CollectionCredit</text>
+
+        <rect x="600" y="230" width="150" height="50" rx="6" fill="none" stroke="currentColor" opacity="0.85"/>
+        <text x="675" y="260" text-anchor="middle" class="box-label">ItemCredit</text>
+
+        <rect x="830" y="160" width="150" height="56" rx="6" fill="none" stroke="currentColor" opacity="0.85"/>
+        <text x="905" y="184" text-anchor="middle" class="box-label">Person</text>
+        <text x="905" y="200" text-anchor="middle" class="box-sub">artist, director, host…</text>
+
+        <!-- arrows -->
+        <line x1="110" y1="80" x2="110" y2="148" stroke="currentColor" marker-end="url(#arrow3)"/>
+        <text x="122" y="118" class="arrow-label">uploads</text>
+
+        <line x1="190" y1="178" x2="288" y2="178" stroke="currentColor" marker-end="url(#arrow3)"/>
+        <text x="205" y="172" class="arrow-label">1 : 1</text>
+
+        <line x1="380" y1="86" x2="380" y2="148" stroke="currentColor" marker-end="url(#arrow3)"/>
+        <text x="392" y="120" class="arrow-label">1 : many (optional)</text>
+
+        <line x1="470" y1="60" x2="598" y2="108" stroke="currentColor" marker-end="url(#arrow3)"/>
+        <line x1="470" y1="176" x2="598" y2="252" stroke="currentColor" marker-end="url(#arrow3)"/>
+
+        <line x1="750" y1="115" x2="828" y2="170" stroke="currentColor" marker-end="url(#arrow3)"/>
+        <line x1="750" y1="255" x2="828" y2="200" stroke="currentColor" marker-end="url(#arrow3)"/>
+        <text x="800" y="145" class="arrow-label" text-anchor="middle">role: artist,</text>
+        <text x="800" y="158" class="arrow-label" text-anchor="middle">host, author…</text>
+        <text x="800" y="225" class="arrow-label" text-anchor="middle">role: director,</text>
+        <text x="800" y="238" class="arrow-label" text-anchor="middle">narrator, creator…</text>
+      </svg>
+    </div>
+    <figcaption>Two join tables (CollectionCredit, ItemCredit) both point at the same Person table — one artist row can be "Artist" on an album and "Director" on a video without duplicating the person.</figcaption>
+  </figure>
+
+  <h3>How each category maps onto it</h3>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Category</th><th>Collection =</th><th>Item =</th><th>sequenceNumber</th><th>Typical credit</th></tr></thead>
+      <tbody>
+        <tr><td>Music</td><td>Album <em>(optional)</em></td><td>Track</td><td>Track number</td><td>Artist</td></tr>
+        <tr><td>Podcasts</td><td>Show</td><td>Episode</td><td>Episode number</td><td>Host</td></tr>
+        <tr><td>Movies</td><td>—</td><td>Movie</td><td>—</td><td>Director</td></tr>
+        <tr><td>Shorts</td><td>—</td><td>Clip</td><td>—</td><td>Creator</td></tr>
+        <tr><td>Series</td><td>Show</td><td>Episode</td><td>Episode number <em>+ season</em></td><td>Creator</td></tr>
+        <tr><td>Audio Books</td><td>Book</td><td>Chapter</td><td>Chapter number</td><td>Author, Narrator</td></tr>
+        <tr><td>News</td><td>—</td><td>Clip</td><td>—</td><td>Reporter / Source</td></tr>
+        <tr><td>Videos</td><td>—</td><td>Video</td><td>—</td><td>Creator</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <span class="label">Simplified for this draft — flag before building</span>
+    <p><strong>Series seasons</strong> aren't a separate table here — <code>Item</code> gets an optional <code>seasonNumber</code> alongside <code>sequenceNumber</code> (the episode number), rather than a full Season entity. Fine until seasons need their own cover art or description.<br>
+    <strong>Music singles vs. albums</strong> — a track with no <code>collectionId</code> is just a standalone single; the same Item/Collection pair handles both without a special case.<br>
+    <strong>News "source"</strong> — could reasonably be a lightweight Collection per publisher/program instead of a per-clip credit. Left as a credit for now since it's simpler; worth revisiting if sources become a real browsing dimension.</p>
+  </div>
+
+  <div class="callout">
+    <span class="label">This is a real migration, not an addition</span>
+    <p>Today's schema is one flat <code>Media</code> table. This splits it into <code>MediaFile</code> (renamed, same idea) plus new <code>Collection</code>, <code>Item</code>, <code>Person</code>, <code>CollectionCredit</code>, and <code>ItemCredit</code> tables — existing rows would need a migration script to become standalone Items, not just a new column. Not something to run until this design is actually agreed on.</p>
+  </div>
+</section>
+
+</main>
+</body>
+</html>
