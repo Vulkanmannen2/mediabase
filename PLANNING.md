@@ -45,6 +45,83 @@ Move media storage from local filesystem to Cloudflare R2. Storage-layer only
 — no app logic changes beyond the storage adapter. Starts only after v1 is
 deployed and stable.
 
+R2 specifically, not S3 or similar: R2 has no egress fees, so cost scales
+with storage held, not with how much people stream — the right shape for a
+media-streaming app where usage cost should stay predictable as listening/
+watching grows.
+
+## Path to Launch
+
+Four things need to happen before this is ready for real (non-test) users.
+Scoped in conversation on 2026-09-11; not yet built.
+
+1. **Storage migration to Cloudflare R2** (see Step Two, above). The longer
+   this waits, the more uploaded media accumulates on local VPS disk and has
+   to be migrated later — do this one early, independent of the others.
+
+2. **Payments** — member fees, and payout splits to creators
+   (`PayoutSplit`, already in the data model). Likely vehicle: Stripe
+   Connect or equivalent. Connect-style providers also handle payee
+   identity verification (KYC, tax info, bank details) as part of payout
+   onboarding — but only for people who actually receive a payout, not
+   every uploader. Doesn't satisfy the copyright-accountability need in
+   item 3 below; that has to be a separate gate.
+
+3. **Creator identity verification** — every creator verifies with BankID
+   (Sweden) or an equivalent strong eID, regardless of whether they ever
+   receive a payout. Purpose is copyright accountability: an unbroken,
+   non-repudiable link between an uploaded item and the real person
+   responsible for it — not a payment requirement.
+   - Direct BankID integration needs a bank Relying Party agreement — too
+     heavy for this project. Integrate via a broker instead.
+   - Starting point: **Signicat**, EU-first. Covers BankID plus other
+     eIDAS-notified national eID schemes (MitID, itsme, SPID, etc.) behind
+     one integration, so EU creators beyond Sweden are covered without
+     extra work.
+   - Outside the EU: no bank-grade eID equivalent exists. Fallback would be
+     document-based verification (Stripe Identity, Veriff, Onfido) — a
+     meaningfully lower assurance tier than bank-backed eID. Not being
+     built now — EU-first, revisit if/when non-EU creators are actually
+     onboarding.
+   - Verification frequency is still open. Original idea was BankID on
+     every creator login; re-verifying only at signup plus at consequential
+     actions (uploading, changing payout details) would give the same
+     accountability at a fraction of the per-check cost and login friction.
+     Not decided.
+   - Identity verification alone does not give the platform legal
+     safe-harbor for hosted content. EU host-liability rules (e-Commerce
+     Directive / DSA) additionally require a notice-and-takedown process
+     and Terms of Service under which creators warrant they own or hold
+     the rights to what they upload. Neither exists yet. Get real legal
+     review before relying on any of this — this is liability territory,
+     not just an engineering decision.
+
+4. **Full frontend build** — Home, the 4 screen patterns (Grid/List/Feed),
+   Collection Detail, and Player shipped 2026-09-11 (see `APP-DESIGN.html`).
+   Remaining: creator/account-management surfaces that don't exist yet
+   (payout-split editing, tag management, etc.).
+
+### GDPR
+
+Applies regardless of the above four items — not something to design
+around. Existing user accounts (email, listening activity) and any future
+payment/membership records are already personal data in scope today,
+independent of the creator-identity work; even bare IP-address logging
+counts as personal data. It cannot be opted out of by simply not storing a
+field like email.
+
+Two tiers going forward:
+- **Regular users** — standard tier: a privacy policy, a lawful basis
+  (service necessity), and the basic data-subject rights (access, export,
+  deletion). Low lift, well-trodden ground.
+- **Creators** — heavier tier: verified legal identity, longer retention
+  for accountability. If the eID flow includes a face/liveness check, that
+  is biometric data used for identification — GDPR's stricter Article 9
+  "special category" rules apply, not just the standard lawful basis.
+
+Data minimization (collect only what's actually needed) reduces the
+compliance burden but does not remove GDPR's applicability.
+
 ## Later / Under Consideration
 
 - Remote Claude Code sessions via the Hetzner VPS (convenience layer, not
