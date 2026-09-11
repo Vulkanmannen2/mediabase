@@ -372,11 +372,11 @@
 
 <section>
   <h2>Database design</h2>
-  <p>Not eight tables — two shapes cover every category. <strong>Collection</strong> is the optional grouping (an album, a podcast show, a series, an audiobook). <strong>Item</strong> is the actual playable thing (a track, an episode, a chapter, or a standalone movie/short/news clip/video). <strong>Person</strong> is anyone credited — artist, director, host, author, narrator — attached with a role, so the same table covers every kind of credit instead of a separate <code>director</code> column here and <code>narrator</code> column there.</p>
+  <p><strong>Revised from the first draft:</strong> Collection isn't its own rigid table anymore. Grouping, genre, mood, and credits all collapse into one flexible <strong>Tag</strong> system — an album is just a tag applied to some tracks, a season is just another tag, "Directed by" is just a tag with a role. <code>category</code> (the 8 home-screen buttons) is the one exception that stays a fixed field on <strong>Item</strong>, since the home screen needs something reliable to query — turning that into a tag too is a real future step, once the UI supports custom navigation, not this one.</p>
 
   <figure>
     <div class="diagram-scroll">
-      <svg viewBox="0 0 1000 480" role="img" aria-label="User uploads MediaFiles. Each Item has exactly one MediaFile and optionally belongs to a Collection. Person is credited on either a Collection or an Item, through join tables CollectionCredit and ItemCredit, each carrying a role.">
+      <svg viewBox="0 0 1040 460" role="img" aria-label="A User uploads a MediaFile, which becomes exactly one Item. Item connects to Tag through the ItemTag join table, which carries a sequence number and a role, covering both grouping tags like albums and credit tags like Director. Separately, Item connects back to User through PayoutSplit, which carries a percentage and represents who actually gets paid for that item.">
         <defs>
           <marker id="arrow3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M0,0 L10,5 L0,10 z" fill="currentColor" />
@@ -386,79 +386,73 @@
         <rect x="30" y="30" width="160" height="50" rx="6" fill="none" stroke="currentColor" opacity="0.85"/>
         <text x="110" y="60" text-anchor="middle" class="box-label">User</text>
 
-        <rect x="30" y="150" width="160" height="56" rx="6" fill="none" stroke="currentColor" opacity="0.85"/>
-        <text x="110" y="174" text-anchor="middle" class="box-label">MediaFile</text>
-        <text x="110" y="190" text-anchor="middle" class="box-sub">the actual bytes on disk</text>
+        <rect x="30" y="190" width="160" height="56" rx="6" fill="none" stroke="currentColor" opacity="0.85"/>
+        <text x="110" y="214" text-anchor="middle" class="box-label">MediaFile</text>
+        <text x="110" y="230" text-anchor="middle" class="box-sub">the actual bytes on disk</text>
 
-        <rect x="290" y="150" width="180" height="56" rx="6" fill="none" stroke="var(--ember-500)" stroke-width="1.6"/>
-        <text x="380" y="174" text-anchor="middle" class="box-label" fill="var(--ember-500)">Item</text>
-        <text x="380" y="190" text-anchor="middle" class="box-sub">track · episode · chapter · standalone</text>
+        <rect x="290" y="190" width="180" height="56" rx="6" fill="none" stroke="var(--ember-500)" stroke-width="1.6"/>
+        <text x="380" y="214" text-anchor="middle" class="box-label" fill="var(--ember-500)">Item</text>
+        <text x="380" y="230" text-anchor="middle" class="box-sub">track · episode · chapter · standalone</text>
 
-        <rect x="290" y="30" width="180" height="56" rx="6" fill="none" stroke="var(--ember-500)" stroke-width="1.6"/>
-        <text x="380" y="54" text-anchor="middle" class="box-label" fill="var(--ember-500)">Collection</text>
-        <text x="380" y="70" text-anchor="middle" class="box-sub">album · show · book — optional</text>
+        <rect x="560" y="190" width="160" height="56" rx="6" fill="none" stroke="currentColor" opacity="0.85"/>
+        <text x="640" y="210" text-anchor="middle" class="box-label">ItemTag</text>
+        <text x="640" y="226" text-anchor="middle" class="box-sub">sequenceNumber</text>
+        <text x="640" y="238" text-anchor="middle" class="box-sub">role — many : many</text>
 
-        <rect x="600" y="90" width="150" height="50" rx="6" fill="none" stroke="currentColor" opacity="0.85"/>
-        <text x="675" y="120" text-anchor="middle" class="box-label">CollectionCredit</text>
+        <rect x="810" y="190" width="200" height="56" rx="6" fill="none" stroke="var(--ember-500)" stroke-width="1.6"/>
+        <text x="910" y="214" text-anchor="middle" class="box-label" fill="var(--ember-500)">Tag</text>
+        <text x="910" y="230" text-anchor="middle" class="box-sub">album · genre · credit</text>
 
-        <rect x="600" y="230" width="150" height="50" rx="6" fill="none" stroke="currentColor" opacity="0.85"/>
-        <text x="675" y="260" text-anchor="middle" class="box-label">ItemCredit</text>
-
-        <rect x="830" y="160" width="150" height="56" rx="6" fill="none" stroke="currentColor" opacity="0.85"/>
-        <text x="905" y="184" text-anchor="middle" class="box-label">Person</text>
-        <text x="905" y="200" text-anchor="middle" class="box-sub">artist, director, host…</text>
+        <rect x="350" y="340" width="240" height="56" rx="6" fill="none" stroke="currentColor" opacity="0.85"/>
+        <text x="470" y="364" text-anchor="middle" class="box-label">PayoutSplit</text>
+        <text x="470" y="380" text-anchor="middle" class="box-sub">percentage — who gets paid</text>
 
         <!-- arrows -->
-        <line x1="110" y1="80" x2="110" y2="148" stroke="currentColor" marker-end="url(#arrow3)"/>
-        <text x="122" y="118" class="arrow-label">uploads</text>
+        <line x1="110" y1="80" x2="110" y2="188" stroke="currentColor" marker-end="url(#arrow3)"/>
+        <text x="122" y="140" class="arrow-label">uploads</text>
 
-        <line x1="190" y1="178" x2="288" y2="178" stroke="currentColor" marker-end="url(#arrow3)"/>
-        <text x="205" y="172" class="arrow-label">1 : 1</text>
+        <line x1="190" y1="218" x2="288" y2="218" stroke="currentColor" marker-end="url(#arrow3)"/>
+        <text x="205" y="212" class="arrow-label">1 : 1</text>
 
-        <line x1="380" y1="86" x2="380" y2="148" stroke="currentColor" marker-end="url(#arrow3)"/>
-        <text x="392" y="120" class="arrow-label">1 : many (optional)</text>
+        <line x1="470" y1="218" x2="558" y2="218" stroke="currentColor" marker-end="url(#arrow3)"/>
+        <line x1="720" y1="218" x2="808" y2="218" stroke="currentColor" marker-end="url(#arrow3)"/>
 
-        <line x1="470" y1="60" x2="598" y2="108" stroke="currentColor" marker-end="url(#arrow3)"/>
-        <line x1="470" y1="176" x2="598" y2="252" stroke="currentColor" marker-end="url(#arrow3)"/>
+        <line x1="390" y1="246" x2="420" y2="338" stroke="currentColor" marker-end="url(#arrow3)"/>
+        <text x="433" y="300" class="arrow-label">who gets paid</text>
 
-        <line x1="750" y1="115" x2="828" y2="170" stroke="currentColor" marker-end="url(#arrow3)"/>
-        <line x1="750" y1="255" x2="828" y2="200" stroke="currentColor" marker-end="url(#arrow3)"/>
-        <text x="800" y="145" class="arrow-label" text-anchor="middle">role: artist,</text>
-        <text x="800" y="158" class="arrow-label" text-anchor="middle">host, author…</text>
-        <text x="800" y="225" class="arrow-label" text-anchor="middle">role: director,</text>
-        <text x="800" y="238" class="arrow-label" text-anchor="middle">narrator, creator…</text>
+        <line x1="355" y1="356" x2="112" y2="84" stroke="currentColor" opacity="0.75" marker-end="url(#arrow3)"/>
+        <text x="225" y="285" class="arrow-label" opacity="0.8">percentage</text>
       </svg>
     </div>
-    <figcaption>Two join tables (CollectionCredit, ItemCredit) both point at the same Person table — one artist row can be "Artist" on an album and "Director" on a video without duplicating the person.</figcaption>
+    <figcaption>One join (ItemTag) covers grouping and credits — the same shape, just a different role. PayoutSplit is deliberately separate and always points back at a real User, because unlike a credit, money has to land somewhere real.</figcaption>
   </figure>
 
   <h3>How each category maps onto it</h3>
   <div class="table-scroll">
     <table>
-      <thead><tr><th>Category</th><th>Collection =</th><th>Item =</th><th>sequenceNumber</th><th>Typical credit</th></tr></thead>
+      <thead><tr><th>Category</th><th>Typical grouping tag</th><th>sequenceNumber</th><th>Typical credit role</th></tr></thead>
       <tbody>
-        <tr><td>Music</td><td>Album <em>(optional)</em></td><td>Track</td><td>Track number</td><td>Artist</td></tr>
-        <tr><td>Podcasts</td><td>Show</td><td>Episode</td><td>Episode number</td><td>Host</td></tr>
-        <tr><td>Movies</td><td>—</td><td>Movie</td><td>—</td><td>Director</td></tr>
-        <tr><td>Shorts</td><td>—</td><td>Clip</td><td>—</td><td>Creator</td></tr>
-        <tr><td>Series</td><td>Show</td><td>Episode</td><td>Episode number <em>+ season</em></td><td>Creator</td></tr>
-        <tr><td>Audio Books</td><td>Book</td><td>Chapter</td><td>Chapter number</td><td>Author, Narrator</td></tr>
-        <tr><td>News</td><td>—</td><td>Clip</td><td>—</td><td>Reporter / Source</td></tr>
-        <tr><td>Videos</td><td>—</td><td>Video</td><td>—</td><td>Creator</td></tr>
+        <tr><td>Music</td><td>Album <em>(optional)</em></td><td>Track number</td><td>Artist</td></tr>
+        <tr><td>Podcasts</td><td>Show</td><td>Episode number</td><td>Host</td></tr>
+        <tr><td>Movies</td><td>—</td><td>—</td><td>Director</td></tr>
+        <tr><td>Shorts</td><td>—</td><td>—</td><td>Creator</td></tr>
+        <tr><td>Series</td><td>Show <em>(+ a season tag)</em></td><td>Episode number</td><td>Creator</td></tr>
+        <tr><td>Audio Books</td><td>Book</td><td>Chapter number</td><td>Author, Narrator</td></tr>
+        <tr><td>News</td><td>Source/Program <em>(optional)</em></td><td>—</td><td>Reporter</td></tr>
+        <tr><td>Videos</td><td>—</td><td>—</td><td>Creator</td></tr>
       </tbody>
     </table>
   </div>
 
-  <div class="callout">
-    <span class="label">Simplified for this draft — flag before building</span>
-    <p><strong>Series seasons</strong> aren't a separate table here — <code>Item</code> gets an optional <code>seasonNumber</code> alongside <code>sequenceNumber</code> (the episode number), rather than a full Season entity. Fine until seasons need their own cover art or description.<br>
-    <strong>Music singles vs. albums</strong> — a track with no <code>collectionId</code> is just a standalone single; the same Item/Collection pair handles both without a special case.<br>
-    <strong>News "source"</strong> — could reasonably be a lightweight Collection per publisher/program instead of a per-clip credit. Left as a credit for now since it's simpler; worth revisiting if sources become a real browsing dimension.</p>
-  </div>
+  <h3>Payment rights</h3>
+  <p>Every <code>Item</code> gets at least one <code>PayoutSplit</code> row — at upload time, the uploader is auto-assigned 100%. They can then add collaborators and adjust the split (e.g. 60/40), as long as everyone named already has a Mediabase account, since this is where real money actually goes. Percentages for a given item are expected to sum to 100 — enforced in application code, not a database constraint, since Postgres can't easily check a sum across rows on its own.</p>
+  <p>This is deliberately a different table from credits, not a reuse of the Tag system: a credit tag can name anyone, on the platform or not ("featuring" someone who never signed up); a <code>PayoutSplit</code> row can't, because it has to resolve to an actual payable account. Your future idea — "anyone can add a video to this song and we split 50/50" — fits on top of this same table without changing its shape: an open offer would just be a rule that auto-creates the <code>PayoutSplit</code> rows once someone uploads a qualifying derivative. Worth designing properly when it's actually being built, not guessed at here.</p>
 
   <div class="callout">
-    <span class="label">This is a real migration, not an addition</span>
-    <p>Today's schema is one flat <code>Media</code> table. This splits it into <code>MediaFile</code> (renamed, same idea) plus new <code>Collection</code>, <code>Item</code>, <code>Person</code>, <code>CollectionCredit</code>, and <code>ItemCredit</code> tables — existing rows would need a migration script to become standalone Items, not just a new column. Not something to run until this design is actually agreed on.</p>
+    <span class="label">Simplified for this draft — flag before building</span>
+    <p><strong>Series seasons</strong> — a season is just a second tag applied to the same episodes (e.g. "Show: X" + "Season 2"), rather than its own table. Reconstructing clean season/episode order from two independent tags isn't fully solved here — worth revisiting once real season data exists.<br>
+    <strong>No migration needed</strong> — existing v1/v2 media, accounts, and seed data get dropped when this schema ships, not carried forward. Confirmed fine to do — nothing there is worth preserving.<br>
+    <strong>Tag creation</strong> — for v2 the system creates tags (via upload/edit forms); letting users freely create their own tags is the natural next step but not built yet.</p>
   </div>
 </section>
 
