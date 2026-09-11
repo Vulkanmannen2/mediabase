@@ -7,14 +7,24 @@ export async function GET(
   _request: Request,
   { params }: { params: { id: string } }
 ) {
-  const media = await prisma.media.findUnique({
+  const item = await prisma.item.findUnique({
     where: { id: params.id },
-    include: { uploader: { select: { name: true, email: true } } },
+    include: {
+      mediaFile: {
+        select: {
+          mimeType: true,
+          durationSeconds: true,
+          uploader: { select: { name: true, email: true } },
+        },
+      },
+      tags: { include: { tag: true } },
+      payoutSplits: { include: { user: { select: { name: true, email: true } } } },
+    },
   });
 
-  if (!media) {
+  if (!item) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  return NextResponse.json(media);
+  return NextResponse.json(item);
 }

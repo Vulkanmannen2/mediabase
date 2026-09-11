@@ -2,7 +2,8 @@ import "dotenv/config";
 import { execFileSync } from "node:child_process";
 import { readdirSync } from "node:fs";
 import path from "node:path";
-import { MediaType } from "../app/generated/prisma/client";
+import bcrypt from "bcryptjs";
+import { MediaCategory } from "../app/generated/prisma/client";
 import { prisma } from "../lib/prisma";
 
 const MEDIA_ROOT = path.join(__dirname, "..", "public", "media");
@@ -17,9 +18,9 @@ const MIME_TYPES: Record<string, string> = {
   ".webm": "video/webm",
 };
 
-const TYPE_BY_DIR: Record<string, MediaType> = {
-  sound: MediaType.AUDIO,
-  video: MediaType.VIDEO,
+const CATEGORY_BY_DIR: Record<string, MediaCategory> = {
+  sound: MediaCategory.MUSIC,
+  video: MediaCategory.VIDEO,
 };
 
 function titleFromFilename(fileName: string): string {
@@ -47,13 +48,23 @@ function durationSeconds(filePath: string): number | null {
 }
 
 async function main() {
+  const seedUser = await prisma.user.upsert({
+    where: { email: "seed@mediabase.local" },
+    update: {},
+    create: {
+      email: "seed@mediabase.local",
+      passwordHash: await bcrypt.hash(`seed-${Date.now()}-not-for-login`, 10),
+      name: "Mediabase Seed",
+    },
+  });
+
   const subdirs = readdirSync(MEDIA_ROOT, { withFileTypes: true }).filter((e) => e.isDirectory());
 
   let seeded = 0;
 
   for (const dir of subdirs) {
-    const type = TYPE_BY_DIR[dir.name];
-    if (!type) continue;
+    const category = CATEGORY_BY_DIR[dir.name];
+    if (!category) continue;
 
     const dirPath = path.join(MEDIA_ROOT, dir.name);
     const files = readdirSync(dirPath).filter((f) => MIME_TYPES[path.extname(f).toLowerCase()]);
@@ -63,24 +74,39 @@ async function main() {
       const filePath = `/media/${dir.name}/${file}`;
       const mimeType = MIME_TYPES[path.extname(file).toLowerCase()];
 
-      const media = await prisma.media.upsert({
+      const mediaFile = await prisma.mediaFile.upsert({
         where: { filePath },
         update: {},
         create: {
-          title: titleFromFilename(file),
-          type,
           filePath,
           mimeType,
           durationSeconds: durationSeconds(absPath),
+          uploaderId: seedUser.id,
         },
       });
 
-      console.log(`  seeded: ${media.title} (${media.type}, ${media.durationSeconds ?? "?"}s)`);
+      const item = await prisma.item.upsert({
+        where: { mediaFileId: mediaFile.id },
+        update: {},
+        create: {
+          mediaFileId: mediaFile.id,
+          category,
+          title: titleFromFilename(file),
+        },
+      });
+
+      await prisma.payoutSplit.upsert({
+        where: { itemId_userId: { itemId: item.id, userId: seedUser.id } },
+        update: {},
+        create: { itemId: item.id, userId: seedUser.id, percentage: 100 },
+      });
+
+      console.log(`  seeded: ${item.title} (${item.category}, ${mediaFile.durationSeconds ?? "?"}s)`);
       seeded += 1;
     }
   }
 
-  console.log(`\nDone — ${seeded} media record(s) in sync.`);
+  console.log(`\nDone — ${seeded} item(s) in sync.`);
 }
 
 main()

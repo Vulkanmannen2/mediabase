@@ -10,10 +10,14 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const media = await prisma.media.findUnique({ where: { id: params.id } });
-  if (!media) {
+  const item = await prisma.item.findUnique({
+    where: { id: params.id },
+    include: { mediaFile: true },
+  });
+  if (!item) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
+  const media = item.mediaFile;
 
   const absolutePath = path.join(process.cwd(), "public", media.filePath);
 

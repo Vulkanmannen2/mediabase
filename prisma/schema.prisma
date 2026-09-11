@@ -12,28 +12,95 @@ datasource db {
   provider = "postgresql"
 }
 
-enum MediaType {
-  AUDIO
+enum MediaCategory {
+  MUSIC
+  PODCAST
+  MOVIE
+  SHORT
+  SERIES
+  AUDIOBOOK
+  NEWS
   VIDEO
 }
 
-model Media {
-  id               String    @id @default(cuid())
-  title            String
-  type             MediaType
-  filePath         String    @unique
-  mimeType         String
-  durationSeconds  Int?
-  createdAt        DateTime  @default(now())
-  uploaderId       String?
-  uploader         User?     @relation(fields: [uploaderId], references: [id])
+// The actual uploaded bytes. See APP-DESIGN.html "Database design" for the
+// reasoning behind splitting this from Item.
+model MediaFile {
+  id              String   @id @default(cuid())
+  filePath        String   @unique
+  mimeType        String
+  durationSeconds Int?
+  uploaderId      String
+  uploader        User     @relation(fields: [uploaderId], references: [id])
+  createdAt       DateTime @default(now())
+  item            Item?
+}
+
+// The playable thing — a track, an episode, a chapter, or a standalone
+// movie/short/news clip/video. category is the one fixed field (drives the
+// 8 home-screen buttons); everything else is a Tag.
+model Item {
+  id           String        @id @default(cuid())
+  mediaFileId  String        @unique
+  mediaFile    MediaFile     @relation(fields: [mediaFileId], references: [id])
+  category     MediaCategory
+  title        String
+  description  String?
+  publishedAt  DateTime      @default(now())
+  createdAt    DateTime      @default(now())
+  tags         ItemTag[]
+  payoutSplits PayoutSplit[]
+}
+
+// A label that can represent grouping (album, show, season), genre, mood,
+// or a credit — the "kind" and the ItemTag.role decide which.
+model Tag {
+  id            String    @id @default(cuid())
+  label         String
+  kind          String?
+  coverImageUrl String?
+  createdById   String?
+  createdBy     User?     @relation(fields: [createdById], references: [id])
+  createdAt     DateTime  @default(now())
+  items         ItemTag[]
+}
+
+model ItemTag {
+  id             String   @id @default(cuid())
+  itemId         String
+  item           Item     @relation(fields: [itemId], references: [id])
+  tagId          String
+  tag            Tag      @relation(fields: [tagId], references: [id])
+  sequenceNumber Int?
+  role           String?
+  createdAt      DateTime @default(now())
+
+  @@unique([itemId, tagId])
+}
+
+// Who actually gets paid for an item, and how much. Deliberately separate
+// from Tag/ItemTag credits — this always points at a real User, because
+// unlike a credit, money has to land somewhere real. Percentages for a
+// given item are expected to sum to 100; enforced in application code.
+model PayoutSplit {
+  id         String   @id @default(cuid())
+  itemId     String
+  item       Item     @relation(fields: [itemId], references: [id])
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  percentage Int
+  createdAt  DateTime @default(now())
+
+  @@unique([itemId, userId])
 }
 
 model User {
-  id            String   @id @default(cuid())
-  email         String   @unique
-  passwordHash  String
-  name          String?
-  createdAt     DateTime @default(now())
-  media         Media[]
+  id           String        @id @default(cuid())
+  email        String        @unique
+  passwordHash String
+  name         String?
+  createdAt    DateTime      @default(now())
+  mediaFiles   MediaFile[]
+  createdTags  Tag[]
+  payoutSplits PayoutSplit[]
 }
