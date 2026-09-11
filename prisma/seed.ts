@@ -24,7 +24,11 @@ const CATEGORY_BY_DIR: Record<string, MediaCategory> = {
 };
 
 function titleFromFilename(fileName: string): string {
-  return path.basename(fileName, path.extname(fileName));
+  const withoutExt = path.basename(fileName, path.extname(fileName));
+  // Real uploads are stored as "<uploadTimestamp>-<original name>" — strip
+  // that prefix so a re-seed of user-uploaded files doesn't pick it up as
+  // the title. Seed-only files (no prefix) pass through unchanged.
+  return withoutExt.replace(/^\d{10,}-/, "");
 }
 
 function durationSeconds(filePath: string): number | null {
@@ -87,7 +91,7 @@ async function main() {
 
       const item = await prisma.item.upsert({
         where: { mediaFileId: mediaFile.id },
-        update: {},
+        update: { title: titleFromFilename(file) },
         create: {
           mediaFileId: mediaFile.id,
           category,
