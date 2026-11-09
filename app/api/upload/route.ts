@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { baseUrl } from "@/lib/base-url";
+import { saveFile } from "@/lib/storage";
 import { MediaCategory } from "@/app/generated/prisma/client";
 
 const MIME_TYPES: Record<string, string> = {
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
       select: { id: true, email: true },
     });
     if (collaboratorUsers.length !== collaborators.length) {
-      // At least one collaborator email doesn't have a Mediabase account yet.
+      // At least one collaborator email doesn't have a Mercito account yet.
       return NextResponse.redirect(new URL("/upload?error=collaborators", baseUrl(request)), 303);
     }
   }
@@ -112,12 +112,8 @@ export async function POST(request: NextRequest) {
   const subdir = mimeType.startsWith("audio/") ? "sound" : "video";
   const safeName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.\-_ åäöÅÄÖ]/g, "_")}`;
   const relDir = `/media/${subdir}`;
-  const absoluteDir = path.join(process.cwd(), "public", relDir);
-  await mkdir(absoluteDir, { recursive: true });
-
-  const absolutePath = path.join(absoluteDir, safeName);
   const buffer = Buffer.from(await file.arrayBuffer());
-  await writeFile(absolutePath, buffer);
+  await saveFile(`${relDir}/${safeName}`, buffer, mimeType);
 
   const uploaderPercentage = 100 - collaboratorTotal;
 

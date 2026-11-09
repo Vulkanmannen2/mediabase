@@ -15,10 +15,12 @@ export type PlayerItem = {
 
 export default function Player({
   item,
+  fileUrl,
   prevHref,
   nextHref,
 }: {
   item: PlayerItem;
+  fileUrl: string;
   prevHref: string | null;
   nextHref: string | null;
 }) {
@@ -66,7 +68,7 @@ export default function Player({
             ref={(el) => {
               mediaRef.current = el;
             }}
-            src={`/api/media/${item.id}/file`}
+            src={fileUrl}
             className="aspect-square w-full rounded-lg border border-neutral-800 object-cover"
             onPlay={() => setPlaying(true)}
             onPause={() => setPlaying(false)}
@@ -80,7 +82,7 @@ export default function Player({
               ref={(el) => {
                 mediaRef.current = el;
               }}
-              src={`/api/media/${item.id}/file`}
+              src={fileUrl}
               onPlay={() => setPlaying(true)}
               onPause={() => setPlaying(false)}
               onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { categoryByValue } from "@/lib/categories";
 import { creditsLine } from "@/lib/format";
+import { getFileUrl } from "@/lib/storage";
 import BackLink from "@/app/components/BackLink";
 import Player from "@/app/components/Player";
 
@@ -18,7 +19,11 @@ export default async function PlayPage({
     where: { id: params.itemId },
     include: {
       mediaFile: {
-        select: { mimeType: true, uploader: { select: { name: true, email: true } } },
+        select: {
+          filePath: true,
+          mimeType: true,
+          uploader: { select: { name: true, email: true } },
+        },
       },
       tags: { include: { tag: true } },
     },
@@ -55,6 +60,8 @@ export default async function PlayPage({
       ? item.mediaFile.uploader.name ?? item.mediaFile.uploader.email
       : null);
 
+  const fileUrl = await getFileUrl(item.id, item.mediaFile.filePath);
+
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-4 px-6 py-6">
       <BackLink href={backHref} label="Back" />
@@ -66,6 +73,7 @@ export default async function PlayPage({
           mimeType: item.mediaFile.mimeType,
           coverImageUrl,
         }}
+        fileUrl={fileUrl}
         prevHref={prevHref}
         nextHref={nextHref}
       />

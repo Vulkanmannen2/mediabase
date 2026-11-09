@@ -6,6 +6,7 @@ export type FeedItem = {
   id: string;
   title: string;
   subtitle?: string | null;
+  fileUrl: string;
 };
 
 function FeedSlide({ item }: { item: FeedItem }) {
@@ -33,7 +34,7 @@ function FeedSlide({ item }: { item: FeedItem }) {
     <div className="relative flex h-screen w-full shrink-0 snap-start items-center justify-center bg-black">
       <video
         ref={videoRef}
-        src={`/api/media/${item.id}/file`}
+        src={item.fileUrl}
         className="h-full w-full object-cover"
         loop
         muted

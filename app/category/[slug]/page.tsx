@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { categoryBySlug } from "@/lib/categories";
 import { collectionTagsForCategory } from "@/lib/collections";
 import { creditsLine } from "@/lib/format";
+import { getFileUrl } from "@/lib/storage";
 import BackLink from "@/app/components/BackLink";
 import GridPattern from "@/app/components/patterns/GridPattern";
 import ListPattern from "@/app/components/patterns/ListPattern";
@@ -20,6 +21,7 @@ export default async function CategoryPage({ params }: { params: { slug: string 
     include: {
       mediaFile: {
         select: {
+          filePath: true,
           mimeType: true,
           durationSeconds: true,
           uploader: { select: { name: true, email: true } },
@@ -46,18 +48,20 @@ export default async function CategoryPage({ params }: { params: { slug: string 
   }
 
   if (meta.pattern === "feed") {
+    const feedItems = await Promise.all(
+      items.map(async (item) => ({
+        id: item.id,
+        title: item.title,
+        subtitle: subtitleFor(item),
+        fileUrl: await getFileUrl(item.id, item.mediaFile.filePath),
+      }))
+    );
     return (
       <div className="relative">
         <div className="absolute left-4 top-4 z-10 rounded-full bg-black/50 px-3 py-1.5 backdrop-blur">
           <BackLink href="/" label="Home" />
         </div>
-        <FeedPattern
-          items={items.map((item) => ({
-            id: item.id,
-            title: item.title,
-            subtitle: subtitleFor(item),
-          }))}
-        />
+        <FeedPattern items={feedItems} />
       </div>
     );
   }
