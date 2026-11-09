@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mediabase — Architecture</title>
+<title>Mercito — Architecture</title>
 <style>
   :root {
     --paper-050: #15161a;
@@ -114,7 +114,7 @@
 
 <header class="doc-head">
   <p class="eyebrow">Internal reference — last verified against the live deploy</p>
-  <h1>Mediabase — architecture</h1>
+  <h1>Mercito — architecture</h1>
   <p class="subtitle">How the pieces actually connect: Loopia, the domain, Coolify, the database, and the app. Written from the real deployed system, including the two things that broke and why.</p>
 </header>
 
@@ -123,7 +123,7 @@
 
   <figure>
     <div class="diagram-scroll">
-      <svg viewBox="0 0 1040 780" role="img" aria-label="A browser resolves media.solutionsskovde.se via a Loopia DNS A record to the Hetzner VPS's IP. Coolify's Traefik proxy on that VPS terminates SSL and routes to the Next.js app container on port 3000. The app reads and writes metadata in a Postgres container over Coolify's internal Docker network, and serves media files from a directory bind-mounted from the host filesystem. Separately, pushing to GitHub's main branch, plus a manual Deploy click in Coolify, triggers Railpack to build a new app container from the repo.">
+      <svg viewBox="0 0 1040 780" role="img" aria-label="A browser resolves mercito.org via a Loopia DNS A record to the Hetzner VPS's IP. Coolify's Traefik proxy on that VPS terminates SSL and routes to the Next.js app container on port 3000. The app reads and writes metadata in a Postgres container over Coolify's internal Docker network, and serves media files from a directory bind-mounted from the host filesystem. Separately, pushing to GitHub's main branch, plus a manual Deploy click in Coolify, triggers Railpack to build a new app container from the repo.">
         <defs>
           <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M0,0 L10,5 L0,10 z" fill="currentColor" />
@@ -138,12 +138,12 @@
         <!-- Loopia -->
         <rect x="370" y="20" width="260" height="54" rx="6" fill="none" stroke="currentColor" />
         <text x="500" y="43" text-anchor="middle" class="box-label">Loopia DNS</text>
-        <text x="500" y="60" text-anchor="middle" class="box-sub">A record: media → 89.167.80.108</text>
+        <text x="500" y="60" text-anchor="middle" class="box-sub">A records: @ and docs → 89.167.80.108</text>
 
         <!-- Browser -->
         <rect x="370" y="110" width="260" height="46" rx="6" fill="none" stroke="currentColor" />
         <text x="500" y="130" text-anchor="middle" class="box-label">Browser</text>
-        <text x="500" y="146" text-anchor="middle" class="box-sub">requests media.solutionsskovde.se</text>
+        <text x="500" y="146" text-anchor="middle" class="box-sub">requests mercito.org</text>
 
         <!-- Traefik proxy -->
         <rect x="370" y="196" width="260" height="52" rx="6" fill="none" stroke="currentColor" />
@@ -222,10 +222,10 @@
   <h2>Walking through each connection</h2>
 
   <h3>1. Domain → server</h3>
-  <p>Loopia holds one DNS <strong>A record</strong>: the subdomain <code>media</code> under <code>solutionsskovde.se</code> points at <code>89.167.80.108</code>, the Hetzner VPS's public IP. That's Loopia's entire job here — it doesn't touch anything after the browser has the IP.</p>
+  <p>Loopia holds the DNS for <code>mercito.org</code>: the root (<code>@</code>) and the <code>docs</code> subdomain each have an <strong>A record</strong> pointing at <code>89.167.80.108</code>, the Hetzner VPS's public IP. That's Loopia's entire job here — it doesn't touch anything after the browser has the IP.</p>
 
   <h3>2. Request path</h3>
-  <p>Every request for <code>media.solutionsskovde.se</code> lands on Coolify's built-in proxy (Traefik), which terminates SSL (a Let's Encrypt certificate, auto-renewed) and forwards it to the app container's internal port 3000. There's no separately configured Nginx — Coolify's proxy is the only thing in that role, on purpose (see <code>STACK.md</code>).</p>
+  <p>Every request for <code>mercito.org</code> lands on Coolify's built-in proxy (Traefik), which terminates SSL (a Let's Encrypt certificate, auto-renewed) and forwards it to the app container's internal port 3000. There's no separately configured Nginx — Coolify's proxy is the only thing in that role, on purpose (see <code>STACK.md</code>).</p>
 
   <h3>3. The app talks to two things</h3>
   <ul>
@@ -269,7 +269,8 @@
     <table>
       <thead><tr><th>Thing</th><th>Where</th></tr></thead>
       <tbody>
-        <tr><td>Live site</td><td><code>https://media.solutionsskovde.se</code></td></tr>
+        <tr><td>Live site</td><td><code>https://mercito.org</code></td></tr>
+        <tr><td>Docs site</td><td><code>https://docs.mercito.org</code></td></tr>
         <tr><td>Coolify dashboard</td><td><code>http://89.167.80.108:8000</code></td></tr>
         <tr><td>SSH to the VPS</td><td><code>ssh mediaplatform</code> (alias in <code>~/.ssh/config</code>)</td></tr>
         <tr><td>SSH key</td><td><code>~/.ssh/mediaplatform_hetzner</code> — never committed to git</td></tr>

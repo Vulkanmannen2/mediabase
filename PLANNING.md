@@ -1,4 +1,4 @@
-# Mediabase — Project Plan
+# Mercito — Project Plan
 
 ## What It Is
 

@@ -5,7 +5,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   type: "That file type isn't supported yet (audio: mp3, wav, m4a, flac — video: mp4, mov, webm).",
   category: "Pick a category.",
   collaborators:
-    "Collaborators must be \"email:percent\" pairs, and each email needs an existing Mediabase account.",
+    "Collaborators must be \"email:percent\" pairs, and each email needs an existing Mercito account.",
   split: "Collaborator percentages can't add up to more than 100.",
 };
 
@@ -107,7 +107,7 @@ export default async function UploadPage({
             className="rounded border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500"
           />
           <p className="text-xs text-neutral-600">
-            Comma-separated <code>email:percent</code> pairs. Each person needs a Mediabase account already. You
+            Comma-separated <code>email:percent</code> pairs. Each person needs a Mercito account already. You
             keep whatever&apos;s left over.
           </p>
         </div>

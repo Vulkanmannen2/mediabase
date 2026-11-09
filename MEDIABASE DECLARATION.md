@@ -1,12 +1,12 @@
-# Mediabase — Declaration
+# Mercito — Declaration
 
-This document defines what Mediabase is and why it exists. It is the
+This document defines what Mercito is and why it exists. It is the
 reference for project purpose and business model — see `PLANNING.md` for
 infrastructure and `STACK.md` for technology.
 
 ## Vision
 
-Mediabase is a digital media platform for publishing, distributing, and
+Mercito is a digital media platform for publishing, distributing, and
 consuming audio and video. Anyone can publish; consumers pay a fixed monthly
 subscription for access to all content. The platform is built to maximize
 the share of revenue that reaches creators, not shareholders.
@@ -15,7 +15,7 @@ Available on web, iOS, Android, macOS, Windows, and Linux.
 
 ## Ownership: Stiftelse (Foundation)
 
-Mediabase is owned and operated by a Swedish stiftelse, not a company. The
+Mercito is owned and operated by a Swedish stiftelse, not a company. The
 foundation:
 
 - Develops and maintains the platform.
@@ -73,7 +73,7 @@ This rewards genuine engagement over clicks or ad impressions.
 
 ## Overall Concept
 
-Mediabase is infrastructure, not a profit-extracting intermediary. Ownership
+Mercito is infrastructure, not a profit-extracting intermediary. Ownership
 by a foundation and revenue distribution tied to real consumption are meant
 to make it a transparent, sustainable, creator-focused alternative to
 conventional media platforms.

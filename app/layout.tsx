@@ -15,7 +15,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Mediabase",
+  title: "Mercito",
   description: "Play the seeded example media files",
 };
 

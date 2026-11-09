@@ -1,4 +1,4 @@
-# Mediabase — Technology Stack
+# Mercito — Technology Stack
 
 Reference doc for every tool/technology in the stack and the job it does.
 See `PLANNING.md` for architecture decisions, reasoning, and roadmap.

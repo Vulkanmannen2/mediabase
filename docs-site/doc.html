@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title id="page-title">Mediabase Docs</title>
+<title id="page-title">Mercito Docs</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <style>
   :root {
     --paper-050: #15161a;
@@ -93,7 +94,7 @@
       .then((md) => {
         content.innerHTML = marked.parse(md);
         const h1 = content.querySelector("h1");
-        if (h1) document.getElementById("page-title").textContent = h1.textContent + " — Mediabase Docs";
+        if (h1) document.getElementById("page-title").textContent = h1.textContent + " — Mercito Docs";
       })
       .catch((err) => {
         content.innerHTML = '<p class="state">Could not load ' + src + " (" + err.message + ")</p>";

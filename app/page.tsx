@@ -10,7 +10,10 @@ export default function Home() {
       </div>
 
       <div>
-        <h1 className="mb-1 text-2xl font-semibold tracking-tight text-neutral-100">Mediabase</h1>
+        <h1 className="mb-1">
+          {/* eslint-disable-next-line @next/next/no-img-element -- static SVG, nothing for next/image to optimize */}
+          <img src="/mercito-logo.svg" alt="Mercito" className="h-8 w-auto" />
+        </h1>
       </div>
 
       <div className="mt-auto grid grid-cols-2 gap-3 sm:grid-cols-4">

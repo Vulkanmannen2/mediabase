@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mediabase — App Design Draft</title>
+<title>Mercito — App Design Draft</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <style>
   :root {
     --paper-050: #15161a;
@@ -119,7 +120,7 @@
 
 <header class="doc-head">
   <p class="eyebrow">First draft — for discussion, not final</p>
-  <h1>Mediabase — from single-list app to a real media app</h1>
+  <h1>Mercito — from single-list app to a real media app</h1>
   <p class="subtitle">Screen flow, layouts for the 8 categories on your home screen, and a database design to back them. Built from your Home wireframe — same sketch style carried through every screen below.</p>
 </header>
 
@@ -445,7 +446,7 @@
   </div>
 
   <h3>Payment rights</h3>
-  <p>Every <code>Item</code> gets at least one <code>PayoutSplit</code> row — at upload time, the uploader is auto-assigned 100%. They can then add collaborators and adjust the split (e.g. 60/40), as long as everyone named already has a Mediabase account, since this is where real money actually goes. Percentages for a given item are expected to sum to 100 — enforced in application code, not a database constraint, since Postgres can't easily check a sum across rows on its own.</p>
+  <p>Every <code>Item</code> gets at least one <code>PayoutSplit</code> row — at upload time, the uploader is auto-assigned 100%. They can then add collaborators and adjust the split (e.g. 60/40), as long as everyone named already has a Mercito account, since this is where real money actually goes. Percentages for a given item are expected to sum to 100 — enforced in application code, not a database constraint, since Postgres can't easily check a sum across rows on its own.</p>
   <p>This is deliberately a different table from credits, not a reuse of the Tag system: a credit tag can name anyone, on the platform or not ("featuring" someone who never signed up); a <code>PayoutSplit</code> row can't, because it has to resolve to an actual payable account. Your future idea — "anyone can add a video to this song and we split 50/50" — fits on top of this same table without changing its shape: an open offer would just be a rule that auto-creates the <code>PayoutSplit</code> rows once someone uploads a qualifying derivative. Worth designing properly when it's actually being built, not guessed at here.</p>
 
   <div class="callout">

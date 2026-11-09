@@ -58,7 +58,7 @@ async function main() {
     create: {
       email: "seed@mediabase.local",
       passwordHash: await bcrypt.hash(`seed-${Date.now()}-not-for-login`, 10),
-      name: "Mediabase Seed",
+      name: "Mercito Seed",
     },
   });
 
