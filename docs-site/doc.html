@@ -82,6 +82,8 @@
   const params = new URLSearchParams(location.search);
   const src = params.get("src");
   const content = document.getElementById("content");
+  const isAbout = location.hostname.startsWith("about.");
+  if (isAbout) document.querySelector(".back").remove();
 
   if (!src) {
     content.innerHTML = '<p class="state">No document specified.</p>';
@@ -94,7 +96,7 @@
       .then((md) => {
         content.innerHTML = marked.parse(md);
         const h1 = content.querySelector("h1");
-        if (h1) document.getElementById("page-title").textContent = h1.textContent + " — Mercito Docs";
+        if (h1) document.getElementById("page-title").textContent = h1.textContent + (isAbout ? "" : " — Mercito Docs");
       })
       .catch((err) => {
         content.innerHTML = '<p class="state">Could not load ' + src + " (" + err.message + ")</p>";

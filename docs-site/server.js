@@ -16,6 +16,13 @@ const ROOT = __dirname;
 http
   .createServer((req, res) => {
     const url = new URL(req.url, "http://localhost");
+
+    // about.mercito.org is the public "what is Mercito" page: same server, opens on the declaration.
+    if ((req.headers.host || "").startsWith("about.") && url.pathname === "/") {
+      res.writeHead(302, { Location: "/doc.html?src=declaration.md" });
+      res.end();
+      return;
+    }
     let filePath = path.join(ROOT, url.pathname === "/" ? "/index.html" : url.pathname);
 
     if (!filePath.startsWith(ROOT)) {
