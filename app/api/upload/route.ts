@@ -1,20 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import path from "node:path";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { baseUrl } from "@/lib/base-url";
-import { saveFile } from "@/lib/storage";
+import { saveFile, fileExists } from "@/lib/storage";
+import { isMediaKey, mimeTypeFor, newMediaKey } from "@/lib/upload";
 import { MediaCategory } from "@/app/generated/prisma/client";
-
-const MIME_TYPES: Record<string, string> = {
-  ".mp3": "audio/mpeg",
-  ".wav": "audio/wav",
-  ".m4a": "audio/mp4",
-  ".flac": "audio/flac",
-  ".mp4": "video/mp4",
-  ".mov": "video/quicktime",
-  ".webm": "video/webm",
-};
 
 function parseCategory(value: FormDataEntryValue | null): MediaCategory | null {
   const v = String(value || "").toUpperCase();
@@ -71,20 +61,22 @@ export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const title = String(formData.get("title") || "").trim();
   const file = formData.get("file");
+  // Set when the browser already uploaded the file straight to R2 (see /api/upload/presign).
+  const uploadedKey = String(formData.get("key") || "");
   const category = parseCategory(formData.get("category"));
   const tagLabels = parseTagList(formData.get("tags"));
   const credits = parseCredits(formData.get("credits"));
   const collaborators = parseCollaborators(formData.get("collaborators"));
 
-  if (!title || !(file instanceof File) || file.size === 0) {
+  const hasFile = file instanceof File && file.size > 0;
+  if (!title || (!hasFile && !uploadedKey)) {
     return NextResponse.redirect(new URL("/upload?error=missing", baseUrl(request)), 303);
   }
   if (!category) {
     return NextResponse.redirect(new URL("/upload?error=category", baseUrl(request)), 303);
   }
 
-  const ext = path.extname(file.name).toLowerCase();
-  const mimeType = MIME_TYPES[ext];
+  const mimeType = mimeTypeFor(uploadedKey || (file as File).name);
   if (!mimeType) {
     return NextResponse.redirect(new URL("/upload?error=type", baseUrl(request)), 303);
   }
@@ -109,18 +101,25 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const subdir = mimeType.startsWith("audio/") ? "sound" : "video";
-  const safeName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.\-_ åäöÅÄÖ]/g, "_")}`;
-  const relDir = `/media/${subdir}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
-  await saveFile(`${relDir}/${safeName}`, buffer, mimeType);
+  let filePath: string;
+  if (uploadedKey) {
+    if (!isMediaKey(uploadedKey) || !(await fileExists(uploadedKey))) {
+      return NextResponse.redirect(new URL("/upload?error=upload", baseUrl(request)), 303);
+    }
+    filePath = uploadedKey;
+  } else {
+    // Local driver only — buffers the whole file, fine for dev, not for hour-long uploads.
+    const upload = file as File;
+    filePath = newMediaKey(upload.name, mimeType);
+    await saveFile(filePath, Buffer.from(await upload.arrayBuffer()), mimeType);
+  }
 
   const uploaderPercentage = 100 - collaboratorTotal;
 
   await prisma.$transaction(async (tx) => {
     const mediaFile = await tx.mediaFile.create({
       data: {
-        filePath: `${relDir}/${safeName}`,
+        filePath,
         mimeType,
         uploaderId,
       },

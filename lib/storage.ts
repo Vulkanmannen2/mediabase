@@ -1,6 +1,6 @@
 import { writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
-import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const DRIVER = process.env.STORAGE_DRIVER === "r2" ? "r2" : "local";
@@ -46,6 +46,27 @@ export async function getFileUrl(itemId: string, key: string): Promise<string> {
     return getSignedUrl(getR2Client(), command, { expiresIn: 3600 });
   }
   return `/api/media/${itemId}/file`;
+}
+
+/**
+ * R2 only: a presigned PUT URL so the browser uploads straight to the bucket and the file never
+ * passes through this server (a ~1h WAV buffered in memory is enough to get the app OOM-killed).
+ * Returns null for the local driver, where the file has to come through /api/upload instead.
+ */
+export async function getUploadUrl(key: string, mimeType: string): Promise<string | null> {
+  if (DRIVER !== "r2") return null;
+  const command = new PutObjectCommand({ Bucket: BUCKET, Key: key, ContentType: mimeType });
+  return getSignedUrl(getR2Client(), command, { expiresIn: 3600 });
+}
+
+/** R2 only: whether the browser's direct upload actually landed. */
+export async function fileExists(key: string): Promise<boolean> {
+  try {
+    await getR2Client().send(new HeadObjectCommand({ Bucket: BUCKET, Key: key }));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export const storageDriver = DRIVER;
