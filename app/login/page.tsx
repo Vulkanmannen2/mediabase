@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { login } from "@/lib/actions/auth";
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -41,12 +40,6 @@ export default function LoginPage({
           Log in
         </button>
       </form>
-      <p className="text-sm text-neutral-500">
-        No account?{" "}
-        <Link href="/signup" className="text-amber-500">
-          Sign up
-        </Link>
-      </p>
     </div>
   );
 }

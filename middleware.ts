@@ -7,7 +7,7 @@ const { auth } = NextAuth(authConfig);
 export default auth((req) => {
   const isLoggedIn = !!req.auth;
   const { pathname } = req.nextUrl;
-  const isPublicPage = pathname === "/login" || pathname === "/signup";
+  const isPublicPage = pathname === "/login";
 
   if (!isLoggedIn && !isPublicPage) {
     const loginUrl = new URL("/login", req.url);
