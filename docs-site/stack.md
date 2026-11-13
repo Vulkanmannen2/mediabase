@@ -10,7 +10,7 @@ See `PLANNING.md` for architecture decisions, reasoning, and roadmap.
 | Frontend/backend framework | Next.js 14 | App logic, routing, server + client rendering |
 | ORM | Prisma | Type-safe database access layer |
 | Database | PostgreSQL | Stores metadata (users, media records, playlists, etc.) |
-| Media storage (v1) | Local filesystem — `/public/media` | Stores actual audio/video files on the VPS disk |
+| Media storage | Cloudflare R2 — bucket `mercito-media`, EU jurisdiction | Stores the actual audio/video files. Private bucket: browsers play and upload through short-lived presigned URLs, so file bytes never pass through the VPS. Local dev uses `/public/media` instead (`STORAGE_DRIVER` unset) |
 | UI | Dark-themed, audio/video tabs | Core interface for browsing and playing media |
 
 ## Infrastructure
@@ -18,17 +18,11 @@ See `PLANNING.md` for architecture decisions, reasoning, and roadmap.
 | Component | Choice | Job |
 |---|---|---|
 | Version control | GitHub (public, Apache 2.0) | Source code hosting |
-| Hosting | Hetzner VPS (Europe, ~€5–7/mo) | Runs the app, database, and (v1) file storage |
+| Hosting | Hetzner VPS (Europe, ~€5–7/mo) | Runs the app, the docs site, and the database |
 | Deployment tooling | Coolify (self-hosted) | Infra-layer orchestration — Docker, services, env vars, SSL/reverse proxy (built-in Traefik), and container restarts. Does not touch app code |
-| CI/CD | GitHub Actions | Automates build + deploy on push to `main` |
-| DNS | Loopia | Domain registrar only — holds the DNS record pointing the domain at the Hetzner VPS's IP. Not involved once traffic arrives at the server |
+| CI/CD | None yet (GitHub Actions planned) | Deploys are a manual **Redeploy** in Coolify after pushing to `main` |
+| DNS | Loopia | Holds the DNS for `mercito.org` — A records for the root, `www`, `docs` and `about` all point at the Hetzner VPS's IP. Not involved once traffic arrives at the server |
 | Editor | VS Code | Development environment — recommended extensions: Prisma, ESLint, Tailwind CSS IntelliSense, GitLens |
-
-## Planned / Step Two
-
-| Component | Choice | Job |
-|---|---|---|
-| Object storage | Cloudflare R2 | Replaces local filesystem for media files — S3-compatible, offloads storage from the VPS |
 
 ## Candidates Explored for Future Scale (not yet adopted)
 

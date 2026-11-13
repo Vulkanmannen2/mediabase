@@ -19,31 +19,36 @@ files. Open source, Apache 2.0. GitHub: Vulkanmannen2.
 | Version control | GitHub (public) |
 | Hosting | Hetzner VPS |
 | Deployment tooling | Coolify (self-hosted) |
-| CI/CD | GitHub Actions |
-| DNS | Loopia → Hetzner VPS |
+| CI/CD | None yet — manual Redeploy in Coolify (GitHub Actions planned) |
+| DNS | Loopia → Hetzner VPS (`mercito.org`, `docs.`, `about.`) |
+| Media storage | Cloudflare R2, EU-jurisdiction bucket `mercito-media` |
 | Database | PostgreSQL on the VPS (Coolify/Docker) |
 | SSL / reverse proxy | Coolify's built-in Traefik |
 | Process management | Docker restart policy (via Coolify) |
 
-## Deployment Workflow (v1)
+## Deployment Workflow
 
 1. Edit locally
-2. Push to GitHub
-3. SSH to VPS
-4. Pull, build; Coolify redeploys the container (Docker restart policy)
-5. Coolify's built-in proxy handles domain + SSL
+2. Push to `main` on GitHub
+3. Click **Redeploy** in Coolify — it pulls the commit, builds with Railpack
+   and swaps the container. A push alone does not deploy.
+4. Coolify's built-in proxy handles domains + SSL
 
-GitHub Actions to eventually automate steps 3–4.
+GitHub Actions (or a Coolify webhook) to eventually automate step 3.
 
 ## Branching
 
 `main` (production) · `dev` (integration) · feature branches as needed.
 
-## Step Two: Cloudflare R2
+## Step Two: Cloudflare R2 — done (2026-11-10)
 
-Move media storage from local filesystem to Cloudflare R2. Storage-layer only
-— no app logic changes beyond the storage adapter. Starts only after v1 is
-deployed and stable.
+Media storage moved from the VPS's local filesystem to Cloudflare R2.
+`lib/storage.ts` is the storage adapter, switched by `STORAGE_DRIVER=r2`.
+The bucket is created under **EU jurisdiction** (GDPR: data stays in the
+EU). One change beyond the adapter turned out to be necessary: uploads go
+**directly from the browser to R2** via a presigned URL, because buffering
+an hour-long upload in the app ran the 4 GB VPS out of memory. See
+`ARCHITECTURE.html` for how both paths work.
 
 R2 specifically, not S3 or similar: R2 has no egress fees, so cost scales
 with storage held, not with how much people stream — the right shape for a
@@ -53,11 +58,11 @@ watching grows.
 ## Path to Launch
 
 Four things need to happen before this is ready for real (non-test) users.
-Scoped in conversation on 2026-09-11; not yet built.
+Scoped in conversation on 2026-09-11.
 
-1. **Storage migration to Cloudflare R2** (see Step Two, above). The longer
-   this waits, the more uploaded media accumulates on local VPS disk and has
-   to be migrated later — do this one early, independent of the others.
+1. **Storage migration to Cloudflare R2** — ✅ done 2026-11-10 (see Step
+   Two, above). All existing media was copied to R2, and the old copies on
+   the VPS disk deleted on 2026-11-13.
 
 2. **Payments** — member fees, and payout splits to creators
    (`PayoutSplit`, already in the data model). Likely vehicle: Stripe
