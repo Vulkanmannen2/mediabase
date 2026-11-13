@@ -114,9 +114,9 @@
 <main>
 
 <header class="doc-head">
-  <p class="eyebrow">Internal reference — last verified against the live deploy</p>
+  <p class="eyebrow">Specification — production architecture</p>
   <h1>Mercito — architecture</h1>
-  <p class="subtitle">How the pieces actually connect: Loopia, the domain, Coolify, the database, Cloudflare R2, and the app. Written from the real deployed system, including the things that broke and why.</p>
+  <p class="subtitle">How the pieces connect: DNS, the server, Coolify, the database, Cloudflare R2, the app and the docs site.</p>
 </header>
 
 <section>
@@ -133,13 +133,13 @@
 
         <!-- VPS boundary -->
         <rect x="40" y="150" width="700" height="370" rx="10" fill="none" stroke="currentColor" stroke-opacity="0.35" stroke-dasharray="5 4" />
-        <text x="58" y="176" class="grp-label">HETZNER VPS · 89.167.80.108</text>
-        <text x="58" y="192" class="box-sub">containers orchestrated by Coolify (dashboard on :8000)</text>
+        <text x="58" y="176" class="grp-label">HETZNER VPS</text>
+        <text x="58" y="192" class="box-sub">containers orchestrated by Coolify</text>
 
         <!-- Loopia -->
         <rect x="340" y="20" width="320" height="54" rx="6" fill="none" stroke="currentColor" />
         <text x="500" y="43" text-anchor="middle" class="box-label">Loopia DNS</text>
-        <text x="500" y="60" text-anchor="middle" class="box-sub">A records: @, www, docs, about → 89.167.80.108</text>
+        <text x="500" y="60" text-anchor="middle" class="box-sub">A records: @, www, docs, about → the VPS</text>
 
         <!-- Browser -->
         <rect x="370" y="110" width="260" height="46" rx="6" fill="none" stroke="currentColor" />
@@ -179,7 +179,7 @@
         <!-- Your Mac -->
         <rect x="760" y="540" width="220" height="52" rx="6" fill="none" stroke="currentColor" stroke-dasharray="4 3" opacity="0.75" />
         <text x="870" y="562" text-anchor="middle" class="box-label" opacity="0.85">Your Mac</text>
-        <text x="870" y="578" text-anchor="middle" class="box-sub">git push · ssh mediaplatform</text>
+        <text x="870" y="578" text-anchor="middle" class="box-sub">local development</text>
 
         <!-- Local dev (separate, unconnected) -->
         <rect x="40" y="550" width="700" height="60" rx="6" fill="none" stroke="currentColor" stroke-dasharray="3 3" opacity="0.5" />
@@ -223,59 +223,39 @@
   <h2>Walking through each connection</h2>
 
   <h3>1. Domain → server</h3>
-  <p>Loopia holds the DNS for <code>mercito.org</code>: the root (<code>@</code>), <code>www</code>, <code>docs</code> and <code>about</code> each have an <strong>A record</strong> pointing at <code>89.167.80.108</code>, the Hetzner VPS's public IP. That's Loopia's entire job here — it doesn't touch anything after the browser has the IP.</p>
+  <p>Loopia holds the DNS for <code>mercito.org</code>: the root (<code>@</code>), <code>www</code>, <code>docs</code> and <code>about</code> each have an <strong>A record</strong> pointing at the Hetzner VPS's public IP. That is Loopia's entire role — it is not involved once the browser has the IP.</p>
 
   <h3>2. Request path</h3>
-  <p>Every request for <code>mercito.org</code> lands on Coolify's built-in proxy (Traefik), which terminates SSL (a Let's Encrypt certificate, auto-renewed) and forwards it to the app container's internal port 3000. There's no separately configured Nginx — Coolify's proxy is the only thing in that role, on purpose (see <code>STACK.md</code>).</p>
+  <p>Every request for <code>mercito.org</code> lands on Coolify's built-in proxy (Traefik), which terminates SSL (a Let's Encrypt certificate, auto-renewed) and forwards it to the app container's internal port 3000. There is no separate Nginx — Coolify's proxy is the only thing in that role, by design (see <code>STACK.md</code>).</p>
 
-  <h3>3. The app talks to two things</h3>
+  <h3>3. What the app talks to</h3>
   <ul>
-    <li><strong>Postgres</strong>, for everything in the <code>Media</code> table — via Prisma, using the internal connection string set as the <code>DATABASE_URL</code> environment variable in Coolify. The database container has no public access; only other containers on the same Docker network can reach it.</li>
+    <li><strong>Postgres</strong>, for all metadata (users, media files, items, tags, payout splits) — via Prisma, using the internal connection string set as the <code>DATABASE_URL</code> environment variable in Coolify. The database container has no public access; only other containers on the same Docker network can reach it.</li>
     <li><strong>Cloudflare R2</strong>, for the actual audio/video files — but only to sign URLs and check that uploads arrived. The file bytes themselves never pass through the app (see 4).</li>
   </ul>
 
   <h3>4. Media storage — Cloudflare R2, EU jurisdiction</h3>
-  <p>Files live in the R2 bucket <code>mercito-media</code>, created under <strong>EU jurisdiction</strong> so the data stays in the EU (GDPR). Because of that, the bucket is only reachable through the <code>.eu.</code> endpoint (<code>&lt;account-id&gt;.eu.r2.cloudflarestorage.com</code>). The bucket is <strong>private</strong> — no public URL, no custom domain. Everything goes through <code>lib/storage.ts</code>, switched on by <code>STORAGE_DRIVER=r2</code>.</p>
+  <p>Files live in the R2 bucket <code>mercito-media</code>, created under <strong>EU jurisdiction</strong> so the data stays in the EU (GDPR). Because of that, the bucket is only reachable through the <code>.eu.</code> endpoint (<code>&lt;account-id&gt;.eu.r2.cloudflarestorage.com</code>). The bucket is <strong>private</strong> — no public URL, no custom domain. Credentials live only in Coolify's environment variables. Everything goes through <code>lib/storage.ts</code>, switched on by <code>STORAGE_DRIVER=r2</code>.</p>
   <ul>
     <li><strong>Playing</strong> — when a page renders, the app creates a presigned GET URL for the file, valid for one hour, and puts it straight into the <code>&lt;audio&gt;</code>/<code>&lt;video&gt;</code> tag. The browser streams from R2, including range requests for seeking.</li>
-    <li><strong>Uploading</strong> — the upload form first asks <code>/api/upload/presign</code> for a storage key and a presigned PUT URL, then sends the file <strong>directly to R2</strong> with a progress readout. Only after that does it post the title, tags, credits and the key to <code>/api/upload</code>, which checks the object really exists in R2 before creating the database rows. The bucket's <strong>CORS policy</strong> allows those PUTs from <code>mercito.org</code>, <code>www.mercito.org</code> and <code>localhost:3000</code>.</li>
+    <li><strong>Uploading</strong> — the upload form first asks <code>/api/upload/presign</code> for a storage key and a presigned PUT URL, then sends the file <strong>directly to R2</strong> with a progress readout, so large files never pass through the app's memory. Only after that does it post the title, tags, credits and the key to <code>/api/upload</code>, which checks the object really exists in R2 before creating the database rows. The bucket's <strong>CORS policy</strong> allows those PUTs from <code>mercito.org</code>, <code>www.mercito.org</code> and <code>localhost:3000</code>.</li>
     <li><strong>Keys</strong> — the object key is the same string as <code>MediaFile.filePath</code> (e.g. <code>/media/sound/1794584804613-episode.wav</code>), so switching storage drivers never needs database changes.</li>
     <li><strong>Local dev</strong> — without <code>STORAGE_DRIVER</code>, files go to <code>public/media/</code> (git-ignored) and are served by <code>/api/media/:id/file</code>.</li>
   </ul>
 
   <h3>5. Deploy path</h3>
-  <p>Pushing to <code>main</code> on GitHub doesn't trigger anything by itself yet — deploys happen when you click <strong>Deploy</strong> in Coolify, which pulls the latest commit and builds a fresh image using Railpack (Coolify's builder), then swaps the running container for the new one.</p>
+  <p>Pushing to <code>main</code> on GitHub does not deploy by itself — a <strong>Redeploy</strong> in Coolify pulls the latest commit, builds a fresh image with Railpack (Coolify's builder) and swaps the running container for the new one. Railpack skips npm install scripts, so the <code>build</code> script runs <code>prisma generate &amp;&amp; next build</code> explicitly rather than relying on a <code>postinstall</code> hook.</p>
 
   <h3>6. Docs site</h3>
   <p>A second Coolify app in the same project builds <code>docs-site/</code> — a tiny dependency-free Node server — and serves it on <code>docs.mercito.org</code>. The same container also answers <code>about.mercito.org</code>, where <code>/</code> opens directly on the Declaration as a public "what is Mercito" page. No login on either.</p>
 </section>
 
 <section>
-  <h2>Things that broke, and why</h2>
-
-  <div class="callout">
-    <span class="label">Prisma client wasn't generated in production</span>
-    <p>The build failed with <code>Module not found: '@/app/generated/prisma/client'</code>. Locally, <code>npm install</code> auto-generates the Prisma client via a <code>postinstall</code> hook — but Railpack skips install scripts (a common security/reproducibility default for build platforms), so that hook never ran. Fix: <code>package.json</code>'s <code>build</code> script now explicitly runs <code>prisma generate &amp;&amp; next build</code>, so generation never depends on an implicit hook.</p>
-  </div>
-
-  <div class="callout">
-    <span class="label">Media files 404'd even though they existed on disk (historical — media is on R2 now)</span>
-    <p>After the first file upload, every play button was greyed out — the browser's media requests returned Next.js's own 404 page. The files were confirmed present, correctly permissioned, inside the container. The cause: the app's Node process had already started (and Next.js appears to do its static-asset resolution relative to that running process) <em>before</em> the <code>scp</code> transfer finished writing files into the mounted folder. Restarting the container — no rebuild needed — fixed it immediately. <strong>Takeaway: after adding new files to the mounted media folder, restart the app container</strong> before expecting them to be servable. The disk mount was later replaced by R2 entirely.</p>
-  </div>
-
-  <div class="callout">
-    <span class="label">Uploading an hour-long podcast gave 502 Bad Gateway</span>
-    <p>The upload route read the whole file into memory — several copies of it — before storing it. A ~1 hour WAV pushed the app to about 2.7 GB on a VPS with 3.8 GB and no swap, so the Linux kernel's out-of-memory killer stopped the app mid-request and Traefik answered 502. Fix: uploads now go from the browser straight to R2 through a presigned URL (see 4), so the server never holds the file and size no longer matters. <strong>Takeaway: never route large media through the app process.</strong></p>
-  </div>
-</section>
-
-<section>
-  <h2>Known manual steps (not yet automated)</h2>
+  <h2>Manual operations (not yet automated)</h2>
   <ul>
-    <li><strong>Schema changes</strong> — after changing <code>prisma/schema.prisma</code> and deploying, migrations don't run automatically. Run them by hand: <code>ssh mediaplatform 'docker exec &lt;container-name&gt; npx prisma migrate deploy'</code>.</li>
-    <li><strong>Deploying</strong> — pushing to <code>main</code> does nothing by itself; click <strong>Redeploy</strong> on the app in Coolify.</li>
-    <li><strong>Container name changes on every deploy</strong> — it's suffixed with a build timestamp, so re-check the current name with <code>docker ps</code> before running the command above.</li>
-    <li><strong>New media</strong> needs no manual step any more — upload through <code>/upload</code> on the site. The seed script (<code>prisma/seed.ts</code>) is only for local dev, where it reads <code>public/media/</code>.</li>
+    <li><strong>Deploying</strong> — push to <code>main</code>, then <strong>Redeploy</strong> the app in Coolify.</li>
+    <li><strong>Schema changes</strong> — migrations don't run on deploy. After deploying a change to <code>prisma/schema.prisma</code>, run <code>npx prisma migrate deploy</code> inside the app container (Coolify → app → Terminal).</li>
+    <li><strong>New media</strong> — uploaded through <code>/upload</code> on the site; no server-side step. The seed script (<code>prisma/seed.ts</code>) is for local dev only, where it reads <code>public/media/</code>.</li>
   </ul>
 </section>
 
@@ -288,12 +268,9 @@
         <tr><td>Live site</td><td><code>https://mercito.org</code></td></tr>
         <tr><td>Docs site</td><td><code>https://docs.mercito.org</code></td></tr>
         <tr><td>Public about page</td><td><code>https://about.mercito.org</code> (the Declaration)</td></tr>
-        <tr><td>Coolify dashboard</td><td><code>http://89.167.80.108:8000</code></td></tr>
-        <tr><td>SSH to the VPS</td><td><code>ssh mediaplatform</code> (alias in <code>~/.ssh/config</code>)</td></tr>
-        <tr><td>SSH key</td><td><code>~/.ssh/mediaplatform_hetzner</code> — never committed to git</td></tr>
         <tr><td>Production <code>DATABASE_URL</code></td><td>Coolify → app → Environment Variables (not in this repo)</td></tr>
         <tr><td>Media files</td><td>Cloudflare → R2 → bucket <code>mercito-media</code> (EU jurisdiction, private)</td></tr>
-        <tr><td>R2 credentials</td><td>Coolify → app → Environment Variables: <code>R2_ACCOUNT_ID</code>, <code>R2_ACCESS_KEY_ID</code>, <code>R2_SECRET_ACCESS_KEY</code>, <code>R2_BUCKET_NAME</code>, <code>STORAGE_DRIVER=r2</code></td></tr>
+        <tr><td>R2 configuration</td><td>Coolify → app → Environment Variables: <code>R2_ACCOUNT_ID</code>, <code>R2_ACCESS_KEY_ID</code>, <code>R2_SECRET_ACCESS_KEY</code>, <code>R2_BUCKET_NAME</code>, <code>STORAGE_DRIVER=r2</code></td></tr>
         <tr><td>R2 upload permissions (CORS)</td><td>Cloudflare → R2 → <code>mercito-media</code> → Settings → CORS Policy</td></tr>
         <tr><td>GitHub repo</td><td><code>github.com/Vulkanmannen2/mediabase</code></td></tr>
       </tbody>
